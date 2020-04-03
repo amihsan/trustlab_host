@@ -16,11 +16,14 @@ class Supervisor(Thread):
 
     def run(self):
         self.register_at_director()
-        ip = '127.0.0.1'
-        buffer_size = 2048
-        tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_server.bind((ip, self.port))
+        # TODO open web socket
+        # TODO handle incoming request
+
+        # ip = '127.0.0.1'
+        # buffer_size = 2048
+        # tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # tcp_server.bind((ip, self.port))
 
     def __init__(self, max_agents, director_hostname="localhost"):
         Thread.__init__(self)
