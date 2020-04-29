@@ -1,4 +1,6 @@
 import argparse
+import importlib
+import re
 import socket
 from threading import Thread
 
@@ -10,35 +12,30 @@ class ScenarioRun(Thread):
 
 
 class Supervisor(Thread):
-    def register_at_director(self):
-        # TODO
-        pass
 
     def run(self):
-        self.register_at_director()
-        # TODO open web socket
-        # TODO handle incoming request
+        self.connector.register_at_director()
 
-        # ip = '127.0.0.1'
-        # buffer_size = 2048
-        # tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # tcp_server.bind((ip, self.port))
-
-    def __init__(self, max_agents, director_hostname="localhost"):
+    def __init__(self, max_agents, director_hostname, connector):
         Thread.__init__(self)
         self.director_hostname = director_hostname
         self.max_agents = max_agents
+        # get correct connector to director
+        module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
+        class_ = getattr(module, connector)
+        self.connector = class_()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--director", help="the hostname of the director, where the supervisor shall register at,"
-                                                 "if not given supervisor expects to work at")
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-d", "--director", default="localhost",
+                        help="the hostname of the director, where the supervisor shall register at.")
+    parser.add_argument("-c", "--connector", default="ChannelsConnector", choices=['ChannelsConnector'],
+                        help="the connector class to use for connecting to director.")
     parser.add_argument("max_agents", type=int,
                         help="the maximal number of agents existing in parallel under this supervisor")
     args = parser.parse_args()
-    supervisor = Supervisor(args.max_agents, args.director) if args.director else Supervisor(args.max_agents)
+    supervisor = Supervisor(args.max_agents, args.director, args.connector)
     supervisor.start()
 
 
