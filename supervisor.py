@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import importlib
 import re
 import socket
@@ -14,7 +15,8 @@ class ScenarioRun(Thread):
 class Supervisor(Thread):
 
     def run(self):
-        self.connector.register_at_director()
+        asyncio.run(self.connector.register_at_director())
+
 
     def __init__(self, max_agents, director_hostname, connector):
         Thread.__init__(self)
@@ -23,12 +25,12 @@ class Supervisor(Thread):
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         class_ = getattr(module, connector)
-        self.connector = class_()
+        self.connector = class_(director_hostname)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-d", "--director", default="localhost",
+    parser.add_argument("-d", "--director", default="127.0.0.1:8000",
                         help="the hostname of the director, where the supervisor shall register at.")
     parser.add_argument("-c", "--connector", default="ChannelsConnector", choices=['ChannelsConnector'],
                         help="the connector class to use for connecting to director.")
