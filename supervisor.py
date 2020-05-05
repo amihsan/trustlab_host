@@ -15,7 +15,8 @@ class ScenarioRun(Thread):
 class Supervisor(Thread):
 
     def run(self):
-        asyncio.run(self.connector.register_at_director())
+        asyncio.run(self.connector.register_at_director(self.max_agents))
+
 
 
     def __init__(self, max_agents, director_hostname, connector):
