@@ -17,7 +17,6 @@ class Supervisor:
         asyncio.run(self.connector.register_at_director(self.max_agents))
 
     def __init__(self, max_agents, director_hostname, connector):
-        Thread.__init__(self)
         self.director_hostname = director_hostname
         self.max_agents = max_agents
         # get correct connector to director
