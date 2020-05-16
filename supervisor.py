@@ -12,12 +12,9 @@ class ScenarioRun(Thread):
         pass
 
 
-class Supervisor(Thread):
-
+class Supervisor:
     def run(self):
         asyncio.run(self.connector.register_at_director(self.max_agents))
-
-
 
     def __init__(self, max_agents, director_hostname, connector):
         Thread.__init__(self)
@@ -39,6 +36,6 @@ if __name__ == '__main__':
                         help="the maximal number of agents existing in parallel under this supervisor")
     args = parser.parse_args()
     supervisor = Supervisor(args.max_agents, args.director, args.connector)
-    supervisor.start()
+    supervisor.run()
 
 
