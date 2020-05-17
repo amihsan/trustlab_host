@@ -10,6 +10,10 @@ class BasicConnector(ABC):
     def set_max_agents(self, max_agents):
         pass
 
+    @abstractmethod
+    async def get_next_run(self):
+        pass
+
     def __init__(self, director_hostname):
         self.director_hostname = director_hostname
 

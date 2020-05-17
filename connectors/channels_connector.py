@@ -15,6 +15,9 @@ class ChannelsConnector(BasicConnector):
         response = await self.websocket.recv()
         print(response)
 
+    async def get_next_run(self):
+        return await self.websocket.recv()
+
     def __init__(self, director_hostname):
         super().__init__(director_hostname)
         self.websocket = None
