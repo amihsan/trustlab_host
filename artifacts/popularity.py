@@ -2,7 +2,7 @@
 # Popularity check
 # The popularity is calculated by averaging the recommendation
 
-from trustlab.lab.artifacts.directxp import direct_experience
+from artifacts.directxp import direct_experience
 
 
 # TODO realize popularity via network requests

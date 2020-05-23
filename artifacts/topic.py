@@ -1,8 +1,8 @@
 ###############################################
 # Topic check
 
-from trustlab.lab.config import Logging
-from trustlab.lab.artifacts.directxp import direct_experience
+from config import Logging
+from artifacts.directxp import direct_experience
 
 
 def topic(current_agent, other_agent, current_topic):

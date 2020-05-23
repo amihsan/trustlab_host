@@ -1,5 +1,5 @@
 from datetime import *
-from trustlab.lab.config import Logging
+from config import Logging
 
 ###############################################################
 # Age checking

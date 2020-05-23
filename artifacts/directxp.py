@@ -2,7 +2,7 @@
 # Direct Experience
 # The tag values in the logfiles are combined to the Direct XP via the median
 
-from trustlab.lab.config import Logging
+from config import Logging
 
 
 def direct_experience(current_agent, other_agent):

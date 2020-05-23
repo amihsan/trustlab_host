@@ -1,4 +1,4 @@
-from trustlab.lab.config import Logging
+from config import Logging
 
 def related(ID, tag):
     file_name = ID + ".txt"

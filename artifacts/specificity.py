@@ -1,5 +1,5 @@
 import random
-from trustlab.lab.config import Logging
+from config import Logging
 
 def specifi(ID, entity, tag):
     file_name = ID + ".txt"

@@ -3,8 +3,8 @@
 # The logfile is checked for the right tag and 
 # corresponding xp value
 
-from trustlab.lab.config import Logging
-from trustlab.lab.artifacts.directxp import direct_experience
+from config import Logging
+from artifacts.directxp import direct_experience
 
 def agreement(ID, entity, tag):
     file_name = ID + ".txt"

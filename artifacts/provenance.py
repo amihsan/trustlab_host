@@ -1,8 +1,8 @@
 ###############################################
 #Provenance check
 
-from trustlab.lab.config import Logging
-from trustlab.lab.artifacts.directxp import direct_experience
+from config import Logging
+from artifacts.directxp import direct_experience
 
 
 def provenance(ID, author):

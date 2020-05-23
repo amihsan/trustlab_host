@@ -1,6 +1,6 @@
 ###############################################
 # Recommendations
-from trustlab.lab.artifacts.directxp import direct_experience
+from artifacts.directxp import direct_experience
 
 
 # TODO realize recommendation via network requests
