@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ef0641b081ac830c25ef4f9e63f098d83dc5d62437f8a293db4efcdc8737c3d6"
+            "sha256": "02f548288d9bac67bc5b8098bd857461b5afbdfbe29d5ed2e8d6f377281fa961"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -23,6 +23,14 @@
             ],
             "index": "pypi",
             "version": "==3.2.7"
+        },
+        "python-serializer": {
+            "hashes": [
+                "sha256:5677e75055a4de5e2c46701daa3f41bcaeac5d196727f9fd091c4d32b6910d8d",
+                "sha256:dbd3887bd51495fb66c710e443a6a6e2d98a220a8c4f7f69affaa9299b8ee26a"
+            ],
+            "index": "pypi",
+            "version": "==1.0.2"
         },
         "websockets": {
             "hashes": [
