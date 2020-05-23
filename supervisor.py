@@ -16,7 +16,6 @@ class Supervisor:
     def run(self):
         asyncio.get_event_loop().run_until_complete(self.connector.register_at_director(self.max_agents))
         # async_to_sync(self.connector.register_at_director)(self.max_agents)
-        print("test")
         while self.takes_new_scenarios:
             new_run = asyncio.get_event_loop().run_until_complete(self.connector.get_next_run())
             print(new_run)
