@@ -1,8 +1,8 @@
 import socket
 from threading import Thread
-from trustlab.lab.trust_metrics import calc_trust_metrics
-from trustlab.lab.artifacts.finalTrust import final_trust
-from trustlab.lab.config import Logging, get_current_time, ServerStatus
+from trust_metrics import calc_trust_metrics
+from artifacts.finalTrust import final_trust
+from config import Logging, get_current_time, ServerStatus
 
 untrustedAgents = []
 
@@ -73,17 +73,16 @@ class ClientThread(Thread):
 
 class AgentServer(Thread):
     def run(self):
-        ip = '127.0.0.1'
         buffer_size = 2048
         tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_server.bind((ip, self.port))
+        tcp_server.bind((self.ip_address, self.port))
         while True:
             tcp_server.listen(4)
-            print("Node server " + str(self.id) + " Waiting for connections from TCP clients...")
+            print("Node server " + str(self.agent) + " Waiting for connections from TCP clients...")
             (conn, (ip, port)) = tcp_server.accept()
             # TODO where is ID, an IP is added to ClientThread in original code
-            new_thread = ClientThread(conn, self.id, port)
+            new_thread = ClientThread(conn, self.agent, port)
             new_thread.start()
             self.threads.append(new_thread)
             # self.threads = [thread for thread in self.threads if thread.is_alive()]
@@ -101,10 +100,11 @@ class AgentServer(Thread):
         #         self.threads.append(new_thread)
         # tcp_server.close()
 
-    def __init__(self, id, port):
+    def __init__(self, agent, ip_address, port):
         Thread.__init__(self)
+        self.agent = agent
+        self.ip_address = ip_address
         self.port = port
-        self.id = id
         self.threads = []
 
 

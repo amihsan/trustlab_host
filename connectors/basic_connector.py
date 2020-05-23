@@ -14,6 +14,10 @@ class BasicConnector(ABC):
     async def get_next_run(self):
         pass
 
+    @abstractmethod
+    async def report_local_discovery(self, local_discovery):
+        pass
+
     def __init__(self, director_hostname):
         self.director_hostname = director_hostname
 
