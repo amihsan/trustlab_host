@@ -1,16 +1,16 @@
 from datetime import *
-from trustlab.lab.artifacts.recommendation import recommendation
-from trustlab.lab.artifacts.directxp import direct_experience
-from trustlab.lab.artifacts.popularity import popularity
-from trustlab.lab.artifacts.authority import authority
-from trustlab.lab.artifacts.agreement import agreement
-from trustlab.lab.artifacts.age import age_check
-from trustlab.lab.artifacts.recency import recency
-from trustlab.lab.artifacts.relatedRecources import related
-from trustlab.lab.artifacts.specificity import specifi
-from trustlab.lab.artifacts.provenance import provenance
-from trustlab.lab.artifacts.topic import topic
-from trustlab.lab.config import Logging, get_current_time
+from artifacts.recommendation import recommendation
+from artifacts.directxp import direct_experience
+from artifacts.popularity import popularity
+from artifacts.authority import authority
+from artifacts.agreement import agreement
+from artifacts.age import age_check
+from artifacts.recency import recency
+from artifacts.relatedRecources import related
+from artifacts.specificity import specifi
+from artifacts.provenance import provenance
+from artifacts.topic import topic
+from config import Logging, get_current_time
 
 ############################################################################
 # ---The trust_initialization function starts with the imported behavior models
