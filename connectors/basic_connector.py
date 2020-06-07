@@ -1,23 +1,24 @@
 from abc import ABC, abstractmethod
+import multiprocessing as multiproc
 
 
-class BasicConnector(ABC):
+class BasicConnector(ABC, multiproc.Process):
     @abstractmethod
-    def register_at_director(self, max_agents):
+    def register_at_director(self):
         pass
 
     @abstractmethod
-    def set_max_agents(self, max_agents):
+    def set_max_agents(self):
         pass
 
     @abstractmethod
-    async def get_next_run(self):
+    def run(self):
         pass
 
-    @abstractmethod
-    async def report_local_discovery(self, local_discovery):
-        pass
-
-    def __init__(self, director_hostname):
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict):
+        multiproc.Process.__init__(self)
         self.director_hostname = director_hostname
+        self.max_agents = max_agents
+        self.send_queue = send_queue
+        self.pipe_dict = pipe_dict
 

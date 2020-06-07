@@ -1,16 +1,17 @@
 import asyncio
 import argparse
 import importlib
+import json
 import re
 import socket
-from threading import Thread
 from contextlib import closing
 from models import Scenario
 from exec.AgentServer import AgentServer
+import multiprocessing as multiproc
 from asgiref.sync import async_to_sync
 
 
-class ScenarioRun(Thread):
+class ScenarioRun(multiproc.Process):
     # method copied from https://stackoverflow.com/a/45690594
     @staticmethod
     def find_free_port():
@@ -28,14 +29,15 @@ class ScenarioRun(Thread):
             server = AgentServer(agent, self.ip_address, free_port)
             self.threads_server.append(server)
             server.start()
-        self.discovery = self.supervisor_connector.report_local_discovery(local_discovery)
+        discovery_message = {"type": "scenario_discovery", "discovery": local_discovery}
+        self.send_queue.put(discovery_message)
+        self.discovery = self.receive_pipe.recv()
         print(self.discovery)
 
     def run(self):
         self.prepare_scenario()
         pass
         # ServerStatus.set_scenario(scenario)
-
         #
         # # logging for all Agents their trust history and their topic values if given
         # for agent in scenario.agents:
@@ -54,8 +56,6 @@ class ScenarioRun(Thread):
         #                     for topic, topic_value in topic_dict.items():
         #                         # TODO topic not always required to be single word
         #                         topic_file.write(bytes(get_current_time() + ', topic trust value from: ' + other_agent + ' ' + topic + ' ' + str(topic_value) + '\n', 'UTF-8'))
-        #
-        #
         # for observation in scenario.observations:
         #     source, target, author, topic, message = observation.split(",", 4)
         #     port = 2000 + scenario.agents.index(target)
@@ -81,13 +81,14 @@ class ScenarioRun(Thread):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, supervisor_connector):
-        Thread.__init__(self)
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe):
+        multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
         self.scenario = scenario
         self.ip_address = ip_address
-        self.supervisor_connector = supervisor_connector
+        self.send_queue = send_queue
+        self.receive_pipe = receive_pipe
         self.discovery = {}
         self.threads_server = []
         self.threads_client = []
@@ -95,14 +96,16 @@ class ScenarioRun(Thread):
 
 class Supervisor:
     def run(self):
-        asyncio.get_event_loop().run_until_complete(self.connector.register_at_director(self.max_agents))
+        self.connector.start()
         # async_to_sync(self.connector.register_at_director)(self.max_agents)
         while self.takes_new_scenarios:
-            new_run = asyncio.get_event_loop().run_until_complete(self.connector.get_next_run())
-            print(new_run)
-            self.agents_in_use += len(new_run["scenario_run_id"])
-            scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["scenario_run_id"],
-                                       Scenario(**new_run["scenario"]), self.ip_address, self.connector)
+            new_run = self.receive_new_scenario.recv()
+            # TODO check if enough agents are left and scenario can be really started
+            self.agents_in_use += len(new_run["agents_at_supervisor"])
+            recv_end, send_end = multiproc.Pipe(False)
+            self.pipe_dict[new_run["scenario_run_id"]] = send_end
+            scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
+                                       Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -113,10 +116,15 @@ class Supervisor:
         self.agents_in_use = 0
         self.takes_new_scenarios = True
         self.scenario_runs = []
+        # setup multiprocessing environment
+        self.send_queue = multiproc.Queue()
+        self.manager = multiproc.Manager()
+        self.pipe_dict = self.manager.dict()
+        self.receive_new_scenario, self.pipe_dict["new_run"] = multiproc.Pipe(False)
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         class_ = getattr(module, connector)
-        self.connector = class_(director_hostname)
+        self.connector = class_(director_hostname, max_agents, self.send_queue, self.pipe_dict)
 
 
 if __name__ == '__main__':
@@ -130,6 +138,9 @@ if __name__ == '__main__':
     parser.add_argument("max_agents", type=int,
                         help="The maximal number of agents existing in parallel under this supervisor.")
     args = parser.parse_args()
+    # set multiprocessing start method
+    multiproc.set_start_method('spawn')
+    # init supervisor as class and execute
     supervisor = Supervisor(args.address, args.max_agents, args.director, args.connector)
     supervisor.run()
 

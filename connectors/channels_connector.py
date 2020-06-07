@@ -1,27 +1,20 @@
 import websockets
 from connectors.basic_connector import BasicConnector
 import json
+import asyncio
 
 
 class ChannelsConnector(BasicConnector):
-    async def register_at_director(self, max_agents):
+    async def register_at_director(self):
         uri = "ws://" + self.director_hostname + "/supervisors/"
         self.websocket = await websockets.client.connect(uri)
-        await self.set_max_agents(max_agents)
+        await self.set_max_agents()
 
-    async def set_max_agents(self, max_agents):
-        register_max_agents = {"type": "max_agents", "max_agents": max_agents}
+    async def set_max_agents(self):
+        register_max_agents = {"type": "max_agents", "max_agents": self.max_agents}
         await self.send_json(register_max_agents)
         response = await self.receive_json()
         print(response)
-
-    async def get_next_run(self):
-        return await self.receive_json()
-
-    async def report_local_discovery(self, local_discovery):
-        message = {"type": "scenario_discovery", "discovery": local_discovery}
-        await self.send_json(message)
-        return await self.receive_json()
 
     async def send_json(self, message):
         await self.websocket.send(json.dumps(message))
@@ -29,8 +22,42 @@ class ChannelsConnector(BasicConnector):
     async def receive_json(self):
         return await self.websocket.recv()
 
-    def __init__(self, director_hostname):
-        super().__init__(director_hostname)
+    async def consumer_handler(self):
+        print("checking for messages")
+        async for message in self.websocket:
+            print(message)
+            message_json = json.loads(message)
+            if message_json["type"] == "scenario_registration":
+                self.pipe_dict["new_run"].send(message_json)
+            elif message_json["scenario_run_id"] in self.pipe_dict.keys()\
+                    and not message_json["type"] == "scenario_registration":
+                self.pipe_dict[message_json["scenario_run_id"]].send(message_json)
+            else:
+                # TODO implement what happens if message does not fit in another case
+                pass
+
+    async def producer_handler(self):
+        while True:
+            message = self.send_queue.get()
+            await self.websocket.send(message)
+
+    async def handler(self):
+        print("handler")
+        consumer_task = asyncio.ensure_future(self.consumer_handler())
+        producer_task = asyncio.ensure_future(self.producer_handler())
+        done, pending = await asyncio.wait([consumer_task, producer_task], return_when=asyncio.ALL_COMPLETED)
+        print("done")
+        for task in pending:
+            task.cancel()
+
+    def run(self):
+        asyncio.get_event_loop().run_until_complete(self.register_at_director())
+        print("start")
+        asyncio.get_event_loop().run_until_complete(self.handler())
+        asyncio.get_event_loop().run_forever()
+
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict):
+        super().__init__(director_hostname, max_agents, send_queue, pipe_dict)
         self.websocket = None
 
 
