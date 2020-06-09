@@ -8,6 +8,7 @@ from contextlib import closing
 from models import Scenario
 from exec.AgentServer import AgentServer
 import multiprocessing as multiproc
+import aioprocessing
 from asgiref.sync import async_to_sync
 
 
@@ -102,7 +103,7 @@ class Supervisor:
             new_run = self.receive_new_scenario.recv()
             # TODO check if enough agents are left and scenario can be really started
             self.agents_in_use += len(new_run["agents_at_supervisor"])
-            recv_end, send_end = multiproc.Pipe(False)
+            recv_end, send_end = aioprocessing.AioPipe(False)
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
                                        Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end)
@@ -117,10 +118,10 @@ class Supervisor:
         self.takes_new_scenarios = True
         self.scenario_runs = []
         # setup multiprocessing environment
-        self.send_queue = multiproc.Queue()
+        self.send_queue = aioprocessing.AioQueue()
         self.manager = multiproc.Manager()
         self.pipe_dict = self.manager.dict()
-        self.receive_new_scenario, self.pipe_dict["new_run"] = multiproc.Pipe(False)
+        self.receive_new_scenario, self.pipe_dict["new_run"] = aioprocessing.AioPipe(False)
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         class_ = getattr(module, connector)

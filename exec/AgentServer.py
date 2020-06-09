@@ -79,26 +79,26 @@ class AgentServer(Thread):
         tcp_server.bind((self.ip_address, self.port))
         while True:
             tcp_server.listen(4)
-            print("Node server " + str(self.agent) + " Waiting for connections from TCP clients...")
+            print("Agent '" + str(self.agent) + "' listens on " + str(self.ip_address) + ":" + str(self.port))
             (conn, (ip, port)) = tcp_server.accept()
             # TODO where is ID, an IP is added to ClientThread in original code
             new_thread = ClientThread(conn, self.agent, port)
             new_thread.start()
             self.threads.append(new_thread)
             # self.threads = [thread for thread in self.threads if thread.is_alive()]
-        # while not ServerStatus.SHUTDOWN:
-        #     try:
-        #         tcp_server.settimeout(1)
-        #         tcp_server.listen(4)
-        #         (conn, (ip, port)) = tcp_server.accept()
-        #     except socket.timeout:
-        #         pass
-        #     else:
-        #         # TODO where is ID, an IP is added to ClientThread in original code
-        #         new_thread = ClientThread(conn, self.id, port, self.scenario)
-        #         new_thread.start()
-        #         self.threads.append(new_thread)
-        # tcp_server.close()
+            # while not ServerStatus.SHUTDOWN:
+            #     try:
+            #         tcp_server.settimeout(1)
+            #         tcp_server.listen(4)
+            #         (conn, (ip, port)) = tcp_server.accept()
+            #     except socket.timeout:
+            #         pass
+            #     else:
+            #         # TODO where is ID, an IP is added to ClientThread in original code
+            #         new_thread = ClientThread(conn, self.id, port, self.scenario)
+            #         new_thread.start()
+            #         self.threads.append(new_thread)
+            # tcp_server.close()
 
     def __init__(self, agent, ip_address, port):
         Thread.__init__(self)
