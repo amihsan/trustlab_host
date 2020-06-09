@@ -26,11 +26,12 @@ class ScenarioRun(multiproc.Process):
         # creating servers
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
-            local_discovery[agent] = free_port
+            local_discovery[agent] = self.ip_address + ":" + str(free_port)
             server = AgentServer(agent, self.ip_address, free_port)
             self.threads_server.append(server)
             server.start()
-        discovery_message = {"type": "scenario_discovery", "discovery": local_discovery}
+        discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
+                             "discovery": local_discovery}
         self.send_queue.put(discovery_message)
         self.discovery = self.receive_pipe.recv()
         print(self.discovery)
