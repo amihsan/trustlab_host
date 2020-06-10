@@ -33,11 +33,17 @@ class ScenarioRun(multiproc.Process):
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
                              "discovery": local_discovery}
         self.send_queue.put(discovery_message)
-        self.discovery = self.receive_pipe.recv()
+        self.discovery = self.receive_pipe.recv()["discovery"]
         print(self.discovery)
+
+    def assert_scenario_start(self):
+        start_confirmation = self.receive_pipe.recv()
+        assert self.discovery.keys() == self.scenario["agents"]
+        assert start_confirmation["scenario_status"] == "started"
 
     def run(self):
         self.prepare_scenario()
+        self.assert_scenario_start()
         pass
         # ServerStatus.set_scenario(scenario)
         #
