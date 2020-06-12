@@ -38,12 +38,13 @@ class ScenarioRun(multiproc.Process):
 
     def assert_scenario_start(self):
         start_confirmation = self.receive_pipe.recv()
-        assert self.discovery.keys() == self.scenario["agents"]
+        assert list(self.discovery.keys()) == self.scenario.agents # all agents need to be discovered
         assert start_confirmation["scenario_status"] == "started"
 
     def run(self):
         self.prepare_scenario()
         self.assert_scenario_start()
+        print("Scenario started!")
         pass
         # ServerStatus.set_scenario(scenario)
         #
