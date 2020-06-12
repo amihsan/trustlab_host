@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 from trust_metrics import calc_trust_metrics
 from artifacts.finalTrust import final_trust
-from config import Logging, get_current_time, ServerStatus
+from scenario_manager import Logging, get_current_time, ScenarioManager
 
 untrustedAgents = []
 
@@ -25,7 +25,7 @@ class ClientThread(Thread):
                 agent_log.close()
 
                 # Function call for the initialization of the trust values
-                calc_trust_metrics(current_agent, other_agent, topic, ServerStatus.SCENARIO)
+                calc_trust_metrics(current_agent, other_agent, topic, ScenarioManager.SCENARIO)
 
                 # Artifact finalTrust calculates the trust based on the saved values in the log file
                 trust_value = final_trust(current_agent, other_agent)

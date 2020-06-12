@@ -1,4 +1,4 @@
-from config import Logging
+from scenario_manager import Logging
 
 def recency(ID, tag):
     file_name = ID + ".txt"

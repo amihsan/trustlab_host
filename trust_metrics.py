@@ -10,7 +10,7 @@ from artifacts.relatedRecources import related
 from artifacts.specificity import specifi
 from artifacts.provenance import provenance
 from artifacts.topic import topic
-from config import Logging, get_current_time
+from scenario_manager import Logging, get_current_time
 
 ############################################################################
 # ---The trust_initialization function starts with the imported behavior models

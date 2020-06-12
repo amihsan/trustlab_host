@@ -1,5 +1,5 @@
 from datetime import *
-from config import Logging
+from scenario_manager import Logging
 
 ###############################################################
 # Age checking

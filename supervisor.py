@@ -1,7 +1,5 @@
-import asyncio
 import argparse
 import importlib
-import json
 import re
 import socket
 from contextlib import closing
@@ -9,7 +7,6 @@ from models import Scenario
 from exec.AgentServer import AgentServer
 import multiprocessing as multiproc
 import aioprocessing
-from asgiref.sync import async_to_sync
 
 
 class ScenarioRun(multiproc.Process):
@@ -23,6 +20,18 @@ class ScenarioRun(multiproc.Process):
 
     def prepare_scenario(self):
         local_discovery = {}
+        # logging for all Agents their trust history and their topic values if given
+        for agent in self.scenario.agents:
+            self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
+            topic_name = agent + "_topic.txt"
+            topic_path = Logging.LOG_PATH / topic_name
+            with open(topic_path.absolute(), "ab+") as topic_file:
+                if scenario.topics and agent in scenario.topics:
+                    for other_agent, topic_dict in scenario.topics[agent].items():
+                        if topic_dict:
+                            for topic, topic_value in topic_dict.items():
+                                # TODO topic not always required to be single word
+                                topic_file.write(bytes(get_current_time() + ', topic trust value from: ' + other_agent + ' ' + topic + ' ' + str(topic_value) + '\n', 'UTF-8'))
         # creating servers
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
@@ -38,7 +47,7 @@ class ScenarioRun(multiproc.Process):
 
     def assert_scenario_start(self):
         start_confirmation = self.receive_pipe.recv()
-        assert list(self.discovery.keys()) == self.scenario.agents # all agents need to be discovered
+        assert list(self.discovery.keys()) == self.scenario.agents  # all agents need to be discovered
         assert start_confirmation["scenario_status"] == "started"
 
     def run(self):
@@ -46,25 +55,6 @@ class ScenarioRun(multiproc.Process):
         self.assert_scenario_start()
         print("Scenario started!")
         pass
-        # ServerStatus.set_scenario(scenario)
-        #
-        # # logging for all Agents their trust history and their topic values if given
-        # for agent in scenario.agents:
-        #     history_name = agent + "_history.txt"
-        #     history_path = Logging.LOG_PATH / history_name
-        #     with open(history_path.absolute(), "ab+") as history_file:
-        #         for other_agent, history_value in scenario.history[agent].items():
-        #             history_file.write(bytes(get_current_time() + ', history trust value from: ' + other_agent + ' ' +
-        #                                      str(history_value) + '\n', 'UTF-8'))
-        #     topic_name = agent + "_topic.txt"
-        #     topic_path = Logging.LOG_PATH / topic_name
-        #     with open(topic_path.absolute(), "ab+") as topic_file:
-        #         if scenario.topics and agent in scenario.topics:
-        #             for other_agent, topic_dict in scenario.topics[agent].items():
-        #                 if topic_dict:
-        #                     for topic, topic_value in topic_dict.items():
-        #                         # TODO topic not always required to be single word
-        #                         topic_file.write(bytes(get_current_time() + ', topic trust value from: ' + other_agent + ' ' + topic + ' ' + str(topic_value) + '\n', 'UTF-8'))
         # for observation in scenario.observations:
         #     source, target, author, topic, message = observation.split(",", 4)
         #     port = 2000 + scenario.agents.index(target)

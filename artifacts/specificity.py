@@ -1,5 +1,5 @@
 import random
-from config import Logging
+from scenario_manager import Logging
 
 def specifi(ID, entity, tag):
     file_name = ID + ".txt"

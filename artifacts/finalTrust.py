@@ -1,6 +1,6 @@
 # The final trust result is combined through the sum of the
 # values in the log file and the corresponding weight given by the scenario file
-from config import Logging
+from scenario_manager import Logging
 
 
 def final_trust(current_agent, other_agent):

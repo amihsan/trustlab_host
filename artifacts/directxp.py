@@ -2,7 +2,7 @@
 # Direct Experience
 # The tag values in the logfiles are combined to the Direct XP via the median
 
-from config import Logging
+from scenario_manager import Logging
 
 
 def direct_experience(current_agent, other_agent):

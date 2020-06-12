@@ -1,7 +1,7 @@
 ###############################################
 #Provenance check
 
-from config import Logging
+from scenario_manager import Logging
 from artifacts.directxp import direct_experience
 
 
