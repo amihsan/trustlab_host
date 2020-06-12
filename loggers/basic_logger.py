@@ -4,7 +4,19 @@ from datetime import datetime
 
 class BasicLogger(ABC):
     @abstractmethod
-    def log_observation(self):
+    def write_to_agent_history(self, agent, other_agent, history_value):
+        pass
+
+    @abstractmethod
+    def write_bulk_to_agent_history(self, agent, history):
+        pass
+
+    @abstractmethod
+    def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value):
+        pass
+
+    @abstractmethod
+    def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
         pass
 
     @staticmethod

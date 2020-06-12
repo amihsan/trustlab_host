@@ -23,15 +23,8 @@ class ScenarioRun(multiproc.Process):
         # logging for all Agents their trust history and their topic values if given
         for agent in self.scenario.agents:
             self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
-            topic_name = agent + "_topic.txt"
-            topic_path = Logging.LOG_PATH / topic_name
-            with open(topic_path.absolute(), "ab+") as topic_file:
-                if scenario.topics and agent in scenario.topics:
-                    for other_agent, topic_dict in scenario.topics[agent].items():
-                        if topic_dict:
-                            for topic, topic_value in topic_dict.items():
-                                # TODO topic not always required to be single word
-                                topic_file.write(bytes(get_current_time() + ', topic trust value from: ' + other_agent + ' ' + topic + ' ' + str(topic_value) + '\n', 'UTF-8'))
+            if self.scenario.topics and agent in self.scenario.topics:
+                self.logger.write_bulk_to_agent_topic_trust(agent, self.scenario.topics[agent])
         # creating servers
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
@@ -80,7 +73,7 @@ class ScenarioRun(multiproc.Process):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe):
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger_str):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -91,6 +84,10 @@ class ScenarioRun(multiproc.Process):
         self.discovery = {}
         self.threads_server = []
         self.threads_client = []
+        # get correct logger
+        module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", logger_str).lower()[1:])
+        class_ = getattr(module, logger_str)
+        self.logger = class_(scenario_run_id)
 
 
 class Supervisor:
@@ -108,13 +105,14 @@ class Supervisor:
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
-    def __init__(self, ip_address, max_agents, director_hostname, connector):
+    def __init__(self, ip_address, max_agents, director_hostname, connector, logger_str):
         self.ip_address = ip_address
         self.director_hostname = director_hostname
         self.max_agents = max_agents
         self.agents_in_use = 0
         self.takes_new_scenarios = True
         self.scenario_runs = []
+        self.logger_str = logger_str
         # setup multiprocessing environment
         self.send_queue = aioprocessing.AioQueue()
         self.manager = multiproc.Manager()
@@ -126,6 +124,7 @@ class Supervisor:
         self.connector = class_(director_hostname, max_agents, self.send_queue, self.pipe_dict)
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-c", "--connector", default="ChannelsConnector", choices=['ChannelsConnector'],
@@ -134,13 +133,15 @@ if __name__ == '__main__':
                         help="The hostname of the director, where the supervisor shall register at.")
     parser.add_argument("-ip", "--address", default="127.0.0.1",
                         help="The IP address of the supervisor itself.")
+    parser.add_argument("-log", "--logger", default="FileLogger", choices=['FileLogger'],
+                        help="The logger class to use for logging trust values during a scenario run.")
     parser.add_argument("max_agents", type=int,
                         help="The maximal number of agents existing in parallel under this supervisor.")
     args = parser.parse_args()
     # set multiprocessing start method
     multiproc.set_start_method('spawn')
     # init supervisor as class and execute
-    supervisor = Supervisor(args.address, args.max_agents, args.director, args.connector)
+    supervisor = Supervisor(args.address, args.max_agents, args.director, args.connector, args.logger)
     supervisor.run()
 
 
