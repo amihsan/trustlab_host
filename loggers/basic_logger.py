@@ -23,6 +23,7 @@ class BasicLogger(ABC):
     def get_current_time():
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    def __init__(self):
-        pass
+    def __init__(self, scenario_run_id, semaphore):
+        self.scenario_run_id = scenario_run_id
+        self.semaphore = semaphore
 

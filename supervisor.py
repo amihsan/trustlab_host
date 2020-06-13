@@ -7,6 +7,7 @@ from models import Scenario
 from exec.AgentServer import AgentServer
 import multiprocessing as multiproc
 import aioprocessing
+import scenario_manager
 
 
 class ScenarioRun(multiproc.Process):
@@ -73,22 +74,26 @@ class ScenarioRun(multiproc.Process):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger_str):
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario_json, ip_address, send_queue, receive_pipe, logger_str):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
-        self.scenario = scenario
         self.ip_address = ip_address
         self.send_queue = send_queue
         self.receive_pipe = receive_pipe
         self.discovery = {}
         self.threads_server = []
         self.threads_client = []
+        self.scenario_manager = scenario_manager.ScenarioManager()
+        self.scenario = self.scenario_manager.Scenario(**scenario_json)
+        logger_semaphore = self.scenario_manager.Semaphore(1)
         # get correct logger
         module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", logger_str).lower()[1:])
-        class_ = getattr(module, logger_str)
-        self.logger = class_(scenario_run_id)
-
+        logger_class = getattr(module, logger_str)
+        self.logger = logger_class(scenario_run_id, logger_semaphore)
+        # self.scenario_manager.register('Logger', logger_class)
+        # self.logger = self.scenario_manager.Logger(scenario_run_id)
+        
 
 class Supervisor:
     def run(self):
@@ -101,7 +106,7 @@ class Supervisor:
             recv_end, send_end = aioprocessing.AioPipe(False)
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
-                                       Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end)
+                                       new_run["scenario"], self.ip_address, self.send_queue, recv_end)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -120,9 +125,8 @@ class Supervisor:
         self.receive_new_scenario, self.pipe_dict["new_run"] = aioprocessing.AioPipe(False)
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
-        class_ = getattr(module, connector)
-        self.connector = class_(director_hostname, max_agents, self.send_queue, self.pipe_dict)
-
+        connector_class = getattr(module, connector)
+        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict)
 
 
 if __name__ == '__main__':

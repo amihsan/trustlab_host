@@ -1,17 +1,9 @@
+from multiprocessing.managers import SyncManager
+from models import Scenario
 
 
-class ScenarioManager:
-    SCENARIO = None
-    SHUTDOWN = False
+class ScenarioManager(SyncManager):
+    pass
 
-    @staticmethod
-    def set_scenario(scenario):
-        ScenarioManager.SCENARIO = scenario
-
-    @staticmethod
-    def shutdown_server():
-        ScenarioManager.SHUTDOWN = True
-
-
-
+ScenarioManager.register('Scenario', Scenario)
 
