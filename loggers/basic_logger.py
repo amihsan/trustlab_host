@@ -4,6 +4,18 @@ from datetime import datetime
 
 class BasicLogger(ABC):
     @abstractmethod
+    def readlines_from_agent_history(self, agent, len_filter=None):
+        pass
+
+    @abstractmethod
+    def readlines_from_agent_trust_log(self, agent, len_filter=None):
+        pass
+
+    @abstractmethod
+    def readlines_from_agent_topic_trust(self, agent, len_filter=None):
+        pass
+
+    @abstractmethod
     def write_to_agent_history(self, agent, other_agent, history_value):
         pass
 
@@ -17,6 +29,18 @@ class BasicLogger(ABC):
 
     @abstractmethod
     def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
+        pass
+
+    @abstractmethod
+    def write_to_agent_message_log(self, observation):
+        pass
+
+    @abstractmethod
+    def write_to_trust_log(self, agent, other_agent, trust_value):
+        pass
+
+    @abstractmethod
+    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
         pass
 
     @staticmethod

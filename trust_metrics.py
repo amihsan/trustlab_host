@@ -1,4 +1,3 @@
-from datetime import *
 from artifacts.recommendation import recommendation
 from artifacts.directxp import direct_experience
 from artifacts.popularity import popularity
@@ -7,10 +6,9 @@ from artifacts.agreement import agreement
 from artifacts.age import age_check
 from artifacts.recency import recency
 from artifacts.relatedRecources import related
-from artifacts.specificity import specifi
+from artifacts.specificity import specificity
 from artifacts.provenance import provenance
 from artifacts.topic import topic
-from scenario_manager import Logging, get_current_time
 
 ############################################################################
 # ---The trust_initialization function starts with the imported behavior models
@@ -19,63 +17,27 @@ from scenario_manager import Logging, get_current_time
 # ---This is needed to calculate the final trust value
 
 
-def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
-    file_name = current_agent + "_trust_log.txt"
-    log_path = Logging.LOG_PATH / file_name
-    agent_behavior = scenario.metrics_per_agent[current_agent]
-
-    #################################################
-    # Artifact Calculation
-
+def calc_trust_metrics(agent, other_agent, current_topic, agents, agent_behavior, weights, trust_thresholds,
+                       authorities, logger):
     if 'direct experience' in agent_behavior:
-        direct_experience_value = format(scenario.weights["direct experience"] * direct_experience(current_agent, other_agent), '.2f')
-        fo = open(log_path.absolute(), "ab+")
-        fo.write(
-            bytes(get_current_time() + ', direct experience trust value from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
-            bytes(' ' + direct_experience_value, 'UTF-8') +
-            bytes("\n", 'UTF-8'))
-        fo.close()
-        
-    if 'authority' in agent_behavior and other_agent in scenario.authorities[current_agent]:
-        authority_value = format(scenario.weights["authority"] * authority(), '.2f')
-        fo = open(log_path.absolute(), "ab+")
-        fo.write(
-            bytes(get_current_time() + ', authority trust value from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
-            bytes(' ' + authority_value, 'UTF-8') +
-            bytes("\n", 'UTF-8'))
-        fo.close()
-        pass
-
+        direct_experience_value = format(weights["direct experience"] * direct_experience(agent, other_agent, logger), '.2f')
+        logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
+    if 'authority' in agent_behavior and other_agent in authorities[agent]:
+        authority_value = format(weights["authority"] * authority(), '.2f')
+        logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
     if 'popularity' in agent_behavior:
-        popularity_value = format(float(scenario.weights["popularity"]) * float(popularity(current_agent, other_agent, scenario.agents, scenario.trust_thresholds['cooperation'])), '.2f')
-        fo = open(log_path.absolute(), "ab+")
-        fo.write(
-            bytes(get_current_time() + ', popularity trust value from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
-            bytes(' ' + popularity_value, 'UTF-8') +
-            bytes("\n", 'UTF-8'))
-        fo.close()
-
+        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, agents, trust_thresholds['cooperation'], logger)), '.2f')
+        logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
     if 'recommendation' in agent_behavior:
-        recommendation_value = format(scenario.weights["recommendation"] * recommendation(current_agent, other_agent, scenario.agents, scenario.trust_thresholds['cooperation']), '.2f')
-        fo = open(log_path.absolute(), "ab+")
-        fo.write(
-            bytes(get_current_time() + ', recommendation trust value from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
-            bytes(' ' + recommendation_value, 'UTF-8') +
-            bytes("\n", 'UTF-8'))
-        fo.close()
-
+        recommendation_value = format(weights["recommendation"] * recommendation(agent, other_agent, agents, trust_thresholds['cooperation'], logger), '.2f')
+        logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
     if 'topic' in agent_behavior:
-        topic_value = format(scenario.weights["topic"] * topic(current_agent, other_agent, current_topic), '.2f')
-        fo = open(log_path.absolute(), "ab+")
-        fo.write(
-            bytes(get_current_time() + ', topic trustvalue from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
-            bytes(' ' + topic_value, 'UTF-8') +
-            bytes("\n", 'UTF-8'))
-        fo.close()
+        topic_value = format(weights["topic"] * topic(agent, other_agent, current_topic, logger), '.2f')
+        logger.write_to_agent_trust_log(agent, "topic", other_agent, topic_value)
 
     # if 'age' in agent_behavior:
     #     credibility_value = str(format(
-    #         float(scenario.weights["age"]) * age_check(current_agent, other_agent, current_message[24:26]),
+    #         float(weights["age"]) * age_check(current_agent, other_agent, current_message[24:26]),
     #         '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
@@ -85,7 +47,7 @@ def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
     #     fo.close()
     #
     # if 'agreement' in agent_behavior:
-    #     credibility_value = str(format(float(scenario.weights["agreement"]) * float(
+    #     credibility_value = str(format(float(weights["agreement"]) * float(
     #         agreement(current_agent, other_agent, current_message[24:26])), '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
@@ -96,7 +58,7 @@ def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
     #
     # if 'provenance' in agent_behavior:
     #     credibility_value = str(
-    #         format(float(scenario.weights["provenance"]) * float(provenance(current_agent, current_message[16:18])), '.2f'))
+    #         format(float(weights["provenance"]) * float(provenance(current_agent, current_message[16:18])), '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
     #         bytes(get_current_time() + ', provenance trustvalue from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
@@ -106,7 +68,7 @@ def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
     #
     # if 'recency' in agent_behavior:
     #     credibility_value = str(
-    #         format(float(scenario.weights["recency"]) * float(recency(current_agent, current_message[24:26])), '.2f'))
+    #         format(float(weights["recency"]) * float(recency(current_agent, current_message[24:26])), '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
     #         bytes(get_current_time() + ', recency trustvalue from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
@@ -116,7 +78,7 @@ def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
     #
     # if 'related resource' in agent_behavior:
     #     credibility_value = str(
-    #         format(float(scenario.weights["related resource"]) * float(related(current_agent, current_message[24:26])), '.2f'))
+    #         format(float(weights["related resource"]) * float(related(current_agent, current_message[24:26])), '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
     #         bytes(get_current_time() + ', related resource trustvalue from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +
@@ -125,8 +87,8 @@ def calc_trust_metrics(current_agent, other_agent, current_topic, scenario):
     #     fo.close()
     #
     # if 'specificity' in agent_behavior:
-    #     credibility_value = str(format(float(scenario.weights["specificity"]) * float(
-    #         specifi(current_agent, other_agent, current_message[24:26])), '.2f'))
+    #     credibility_value = str(format(float(weights["specificity"]) * float(
+    #         specificity(current_agent, other_agent, current_message[24:26])), '.2f'))
     #     fo = open(log_path.absolute(), "ab+")
     #     fo.write(
     #         bytes(get_current_time() + ', specificity trustvalue from: ', 'UTF-8') + bytes(other_agent, 'UTF-8') +

@@ -8,43 +8,81 @@ class FileLogger(BasicLogger):
     if not LOG_PATH.is_dir():
         os.mkdir(LOG_PATH.absolute())
 
+    def readlines_from_agent_history(self, agent, len_filter=None):
+        log_path = self.log_path / f"{agent}_history.txt"
+        with open(log_path.absolute(), "r+") as history_file:
+            history_lines = history_file.readlines()
+            # TODO implement len_filter change on history_lines
+        return history_lines
+
+    def readlines_from_agent_trust_log(self, agent, len_filter=None):
+        log_path = self.log_path / f"{agent}_trust_log.txt"
+        with open(log_path.absolute(), "r+") as trust_log_file:
+            trust_log_lines = trust_log_file.readlines()
+            # TODO implement len_filter change on trust_log_lines
+        return trust_log_lines
+
+    def readlines_from_agent_topic_trust(self, agent, len_filter=None):
+        log_path = self.log_path / f"{agent}_topic.txt"
+        with open(log_path.absolute(), "r+") as topic_file:
+            topic_lines = topic_file.readlines()
+            # TODO implement len_filter change on topic_lines
+        return topic_lines
+
     def write_to_agent_history(self, agent, other_agent, history_value):
+        log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
-            file_name = agent + "_history.txt"
-            path = self.log_path / file_name
-            with open(path.absolute(), "ab+") as history_file:
-                history_file.write(BasicLogger.get_current_time() + ', history trust value from: ' + other_agent + ' ' +
-                                   str(history_value) + '\n')
+            with open(log_path.absolute(), "a+") as history_file:
+                print(f"{BasicLogger.get_current_time()}, history trust value from: '{other_agent}': "
+                      f"{history_value}\n", file=history_file)
 
     def write_bulk_to_agent_history(self, agent, history):
+        log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
-            file_name = agent + "_history.txt"
-            path = self.log_path / file_name
-            with open(path.absolute(), "ab+") as history_file:
+            with open(log_path.absolute(), "a+") as history_file:
                 for other_agent, history_value in history.items():
-                    history_file.write(BasicLogger.get_current_time() + ', history trust value from: ' + other_agent
-                                       + ' ' + str(history_value) + '\n')
+                    print(f"{BasicLogger.get_current_time()}, history trust value from '{other_agent}': "
+                          f"{history_value}\n", file=history_file)
 
     def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value):
+        log_path = self.log_path / f"{agent}_topic.txt"
         with self.semaphore:
-            file_name = agent + "_topic.txt"
-            topic_path = self.log_path / file_name
-            with open(topic_path.absolute(), "ab+") as topic_file:
-                # TODO topic not always required to be single word
-                topic_file.write(BasicLogger.get_current_time() + ', topic trust value from: ' + other_agent +
-                                 ' ' + topic + ' ' + str(topic_value) + '\n')
+            with open(log_path.absolute(), "a+") as topic_file:
+                print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding '{topic}': "
+                      f"{topic_value}\n", file=topic_file)
 
     def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
+        log_path = self.log_path / f"{agent}_topic.txt"
         with self.semaphore:
-            file_name = agent + "_topic.txt"
-            topic_path = self.log_path / file_name
-            with open(topic_path.absolute(), "ab+") as topic_file:
+            with open(log_path.absolute(), "a+") as topic_file:
                 for other_agent, topic_dict in topic_trust.items():
                     if topic_dict:
                         for topic, topic_value in topic_dict.items():
-                            # TODO topic not always required to be single word
-                            topic_file.write(BasicLogger.get_current_time() + ', topic trust value from: ' + other_agent
-                                             + ' ' + topic + ' ' + str(topic_value) + '\n')
+                            print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding "
+                                  f"'{topic}': {topic_value}\n", file=topic_file)
+
+    def write_to_agent_message_log(self, observation):
+        log_path = self.log_path / f"{observation.receiver}.txt"
+        write_string = f"{BasicLogger.get_current_time()}, '{observation.receiver}' received from " \
+                       f"'{observation.sender}' from author '{observation.author}' with topic '{observation.topic}' " \
+                       f"the message: {observation.message}\n"
+        with self.semaphore:
+            with open(log_path.absolute(), "a+") as agent_log:
+                print(write_string, file=agent_log)
+
+    def write_to_trust_log(self, agent, other_agent, trust_value):
+        log_path = self.log_path / "trust_log.txt"
+        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}' with value: {trust_value}\n"
+        with self.semaphore:
+            with open(log_path.absolute(), 'a+') as trust_log:
+                print(write_string, file=trust_log)
+
+    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
+        log_path = self.log_path / f"{agent}_trust_log.txt"
+        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value from '{other_agent}': {trust_value}\n"
+        with self.semaphore:
+            with open(log_path.absolute(), "a+") as trust_log:
+                print(write_string,  file=trust_log)
 
     def __init__(self, scenario_run_id, semaphore):
         super().__init__(scenario_run_id, semaphore)

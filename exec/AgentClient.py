@@ -4,24 +4,22 @@ from threading import Thread
 
 class AgentClient(Thread):
     def run(self):
-        buffer_size = 2000
+        buffer_size = 2048
         tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_client.connect(('127.0.0.1', self.port))
+        tcp_client.connect((self.remote_ip, self.remote_port))
         # send message
-        tcp_client.send(bytes(self.msg, 'UTF-8'))
+        tcp_client.send(bytes(self.message, 'UTF-8'))
         receive_data = tcp_client.recv(buffer_size)
         # print("data sent at :"  + time.ctime(time.time()))
-        receive_data = receive_data.decode()
+        receive_data = receive_data.decode('utf-8')
         print(receive_data)
         tcp_client.close()
-        return True
 
-    def __init__(self, ID, host, port, msg):
+    def __init__(self, remote_ip, remote_port, message):
         Thread.__init__(self)
-        self.ID = ID
-        self.host = host
-        self.port = port
-        self.msg = msg
+        self.remote_ip = remote_ip
+        self.remote_port = int(remote_port)
+        self.message = message
 
 
 

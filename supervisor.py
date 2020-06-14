@@ -2,12 +2,13 @@ import argparse
 import importlib
 import re
 import socket
+import time
 from contextlib import closing
-from models import Scenario
+from models import Scenario, Observation
 from exec.AgentServer import AgentServer
+from exec.AgentClient import AgentClient
 import multiprocessing as multiproc
 import aioprocessing
-import scenario_manager
 
 
 class ScenarioRun(multiproc.Process):
@@ -30,7 +31,9 @@ class ScenarioRun(multiproc.Process):
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
-            server = AgentServer(agent, self.ip_address, free_port)
+            server = AgentServer(agent, self.ip_address, free_port, self.scenario.metrics_per_agent[agent],
+                                 self.scenario.weights, self.scenario.trust_threshold, self.scenario.authorities,
+                                 self.logger)
             self.threads_server.append(server)
             server.start()
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
@@ -48,20 +51,14 @@ class ScenarioRun(multiproc.Process):
         self.prepare_scenario()
         self.assert_scenario_start()
         print("Scenario started!")
-        pass
-        # for observation in scenario.observations:
-        #     source, target, author, topic, message = observation.split(",", 4)
-        #     port = 2000 + scenario.agents.index(target)
-        #     client_thread = AgentClient(source, self.HOST, port, observation)
-        #     threads_client.append(client_thread)
-        #     client_thread.start()
-        #     file_path = Logging.LOG_PATH / "director_log.txt"
-        #     director_file = open(file_path.absolute(), "ab+")
-        #     # write_string = get_current_time() + ", '" + source + "' sends '" + target + "' from author '" + author + "' with topic '" + topic + "' the message: " + message + '\n'
-        #     write_string = get_current_time() + ", '" + source + "' sends '" + target + "', topic '" + topic + "', message: " + message + '\n'
-        #     director_file.write(bytes(write_string, 'UTF-8'))
-        #     director_file.close()
-        #     time.sleep(1)
+        for observation_dict in self.scenario.observations:
+            # source, target, author, topic, message = observation.split(",", 4)
+            observation = Observation(**observation_dict)
+            ip, port = self.discovery[observation.receiver].split(":")
+            client_thread = AgentClient(ip, port, observation_dict)
+            # threads_client.append(client_thread)
+            client_thread.start()
+            time.sleep(1)
         # for thread in threads_client:
         #     thread.join()
         # for server in thread_server:
@@ -74,7 +71,7 @@ class ScenarioRun(multiproc.Process):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario_json, ip_address, send_queue, receive_pipe, logger_str):
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger_str):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -84,8 +81,8 @@ class ScenarioRun(multiproc.Process):
         self.discovery = {}
         self.threads_server = []
         self.threads_client = []
-        self.scenario_manager = scenario_manager.ScenarioManager()
-        self.scenario = self.scenario_manager.Scenario(**scenario_json)
+        self.scenario = scenario
+        self.scenario_manager = multiproc.Manager()
         logger_semaphore = self.scenario_manager.Semaphore(1)
         # get correct logger
         module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", logger_str).lower()[1:])
@@ -106,7 +103,8 @@ class Supervisor:
             recv_end, send_end = aioprocessing.AioPipe(False)
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
-                                       new_run["scenario"], self.ip_address, self.send_queue, recv_end)
+                                       Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end,
+                                       self.logger_str)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
