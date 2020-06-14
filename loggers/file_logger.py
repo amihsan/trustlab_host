@@ -33,23 +33,23 @@ class FileLogger(BasicLogger):
         log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
-                print(f"{BasicLogger.get_current_time()}, history trust value from: '{other_agent}': "
-                      f"{history_value}\n", file=history_file)
+                print(f"{BasicLogger.get_current_time()}, history trust value from: '{other_agent}': {history_value}",
+                      file=history_file)
 
     def write_bulk_to_agent_history(self, agent, history):
         log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
                 for other_agent, history_value in history.items():
-                    print(f"{BasicLogger.get_current_time()}, history trust value from '{other_agent}': "
-                          f"{history_value}\n", file=history_file)
+                    print(f"{BasicLogger.get_current_time()}, history trust value from '{other_agent}': {history_value}"
+                          , file=history_file)
 
     def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value):
         log_path = self.log_path / f"{agent}_topic.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as topic_file:
                 print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding '{topic}': "
-                      f"{topic_value}\n", file=topic_file)
+                      f"{topic_value}", file=topic_file)
 
     def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
         log_path = self.log_path / f"{agent}_topic.txt"
@@ -59,27 +59,27 @@ class FileLogger(BasicLogger):
                     if topic_dict:
                         for topic, topic_value in topic_dict.items():
                             print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding "
-                                  f"'{topic}': {topic_value}\n", file=topic_file)
+                                  f"'{topic}': {topic_value}", file=topic_file)
 
     def write_to_agent_message_log(self, observation):
         log_path = self.log_path / f"{observation.receiver}.txt"
         write_string = f"{BasicLogger.get_current_time()}, '{observation.receiver}' received from " \
                        f"'{observation.sender}' from author '{observation.author}' with topic '{observation.topic}' " \
-                       f"the message: {observation.message}\n"
+                       f"the message: {observation.message}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as agent_log:
                 print(write_string, file=agent_log)
 
     def write_to_trust_log(self, agent, other_agent, trust_value):
         log_path = self.log_path / "trust_log.txt"
-        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}' with value: {trust_value}\n"
+        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}' with value: {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), 'a+') as trust_log:
                 print(write_string, file=trust_log)
 
     def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
         log_path = self.log_path / f"{agent}_trust_log.txt"
-        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value from '{other_agent}': {trust_value}\n"
+        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value from '{other_agent}': {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as trust_log:
                 print(write_string,  file=trust_log)

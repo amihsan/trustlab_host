@@ -1,5 +1,6 @@
 import argparse
 import importlib
+import json
 import re
 import socket
 import time
@@ -31,9 +32,9 @@ class ScenarioRun(multiproc.Process):
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
-            server = AgentServer(agent, self.ip_address, free_port, self.scenario.metrics_per_agent[agent],
-                                 self.scenario.weights, self.scenario.trust_threshold, self.scenario.authorities,
-                                 self.logger)
+            server = AgentServer(agent, self.ip_address, free_port, self.scenario.agents,
+                                 self.scenario.metrics_per_agent[agent], self.scenario.weights,
+                                 self.scenario.trust_thresholds, self.scenario.authorities,self.logger)
             self.threads_server.append(server)
             server.start()
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
@@ -55,7 +56,7 @@ class ScenarioRun(multiproc.Process):
             # source, target, author, topic, message = observation.split(",", 4)
             observation = Observation(**observation_dict)
             ip, port = self.discovery[observation.receiver].split(":")
-            client_thread = AgentClient(ip, port, observation_dict)
+            client_thread = AgentClient(ip, port, json.dumps(observation_dict))
             # threads_client.append(client_thread)
             client_thread.start()
             time.sleep(1)
@@ -71,7 +72,7 @@ class ScenarioRun(multiproc.Process):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger_str):
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -82,14 +83,7 @@ class ScenarioRun(multiproc.Process):
         self.threads_server = []
         self.threads_client = []
         self.scenario = scenario
-        self.scenario_manager = multiproc.Manager()
-        logger_semaphore = self.scenario_manager.Semaphore(1)
-        # get correct logger
-        module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", logger_str).lower()[1:])
-        logger_class = getattr(module, logger_str)
-        self.logger = logger_class(scenario_run_id, logger_semaphore)
-        # self.scenario_manager.register('Logger', logger_class)
-        # self.logger = self.scenario_manager.Logger(scenario_run_id)
+        self.logger = logger
         
 
 class Supervisor:
@@ -102,9 +96,17 @@ class Supervisor:
             self.agents_in_use += len(new_run["agents_at_supervisor"])
             recv_end, send_end = aioprocessing.AioPipe(False)
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
+            # creating logger for new scenario run with already registered semaphore
+            index, logger_semaphore_dict = next((index, semaphore) for (index, semaphore) in
+                                           enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
+            logger_semaphore = logger_semaphore_dict["semaphore"]
+            self.logger_semaphores[index]["used_by"] = new_run["scenario_run_id"]
+            module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
+            logger_class = getattr(module, self.logger_str)
+            logger = logger_class(new_run["scenario_run_id"], logger_semaphore)
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
                                        Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end,
-                                       self.logger_str)
+                                       logger)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -121,6 +123,8 @@ class Supervisor:
         self.manager = multiproc.Manager()
         self.pipe_dict = self.manager.dict()
         self.receive_new_scenario, self.pipe_dict["new_run"] = aioprocessing.AioPipe(False)
+        # setup logger semaphores for all possible scenario runs
+        self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
