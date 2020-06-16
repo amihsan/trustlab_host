@@ -34,7 +34,8 @@ class ScenarioRun(multiproc.Process):
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
             server = AgentServer(agent, self.ip_address, free_port, self.scenario.agents,
                                  self.scenario.metrics_per_agent[agent], self.scenario.weights,
-                                 self.scenario.trust_thresholds, self.scenario.authorities,self.logger)
+                                 self.scenario.trust_thresholds, self.scenario.authorities, self.logger,
+                                 self.observations_done)
             self.threads_server.append(server)
             server.start()
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
@@ -47,20 +48,29 @@ class ScenarioRun(multiproc.Process):
         start_confirmation = self.receive_pipe.recv()
         assert list(self.discovery.keys()) == self.scenario.agents  # all agents need to be discovered
         assert start_confirmation["scenario_status"] == "started"
+        self.scenario_runs = True
 
     def run(self):
         self.prepare_scenario()
         self.assert_scenario_start()
-        print("Scenario started!")
-        for observation_dict in self.scenario.observations:
-            # source, target, author, topic, message = observation.split(",", 4)
-            observation = Observation(**observation_dict)
-            ip, port = self.discovery[observation.receiver].split(":")
-            client_thread = AgentClient(ip, port, json.dumps(observation_dict))
-            # threads_client.append(client_thread)
-            client_thread.start()
-            time.sleep(1)
-        # for thread in threads_client:
+        while self.scenario_runs:
+            observation_dict = next((obs for obs in self.observations_to_exec if len(obs["before"]) == 0), None)
+            if observation_dict is not None:
+                observation = Observation(**observation_dict)
+                ip, port = self.discovery[observation.receiver].split(":")
+                client_thread = AgentClient(ip, port, json.dumps(observation_dict))
+                # self.threads_client.append(client_thread)
+                client_thread.start()
+                self.observations_to_exec.remove(observation_dict)
+            observation_done_dict = next((obs for obs in self.observations_done), None)
+            if observation_done_dict is not None:
+                done_message = {
+                    "type": "observation_done",
+                    "observation_id": observation_done_dict["observation_id"]
+                }
+                self.send_queue.put(done_message)
+                self.observations_done.remove(observation_done_dict)
+        # for thread in self.threads_client:
         #     thread.join()
         # for server in thread_server:
         #     for thread in server.threads:
@@ -71,8 +81,17 @@ class ScenarioRun(multiproc.Process):
         # # while len(threads_client) > 0 or any([len(server.threads) > 0 for server in thread_server]):
         # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
         # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
+        # for observation_dict in self.scenario.observations:
+        #     # source, target, author, topic, message = observation.split(",", 4)
+        #     observation = Observation(**observation_dict)
+        #     ip, port = self.discovery[observation.receiver].split(":")
+        #     client_thread = AgentClient(ip, port, json.dumps(observation_dict))
+        #     # threads_client.append(client_thread)
+        #     client_thread.start()
+        #     time.sleep(1)
 
-    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger):
+    def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger,
+                 observations_done):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -84,6 +103,10 @@ class ScenarioRun(multiproc.Process):
         self.threads_client = []
         self.scenario = scenario
         self.logger = logger
+        self.scenario_runs = False
+        self.observations_done = observations_done
+        # filter observations that have to start at this supervisor
+        self.observations_to_exec = [obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor]
         
 
 class Supervisor:
@@ -98,15 +121,20 @@ class Supervisor:
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
             # creating logger for new scenario run with already registered semaphore
             index, logger_semaphore_dict = next((index, semaphore) for (index, semaphore) in
-                                           enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
+                                                enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
             logger_semaphore = logger_semaphore_dict["semaphore"]
             self.logger_semaphores[index]["used_by"] = new_run["scenario_run_id"]
             module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
             logger_class = getattr(module, self.logger_str)
             logger = logger_class(new_run["scenario_run_id"], logger_semaphore)
+            # taking one observations_done list
+            index, done_dict = next((index, obs_done_dict) for (index, obs_done_dict) in
+                                    enumerate(self.observations_done) if obs_done_dict["used_by"] == "")
+            observations_done = done_dict["list"]
+            self.observations_done[index]["used_by"] = new_run["scenario_run_id"]
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
                                        Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end,
-                                       logger)
+                                       logger, observations_done)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -125,6 +153,8 @@ class Supervisor:
         self.receive_new_scenario, self.pipe_dict["new_run"] = aioprocessing.AioPipe(False)
         # setup logger semaphores for all possible scenario runs
         self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
+        # setup observations_done lists
+        self.observations_done = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)

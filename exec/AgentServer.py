@@ -34,12 +34,13 @@ class ClientThread(Thread):
                 #     self.scenario.authority.append(current_agent[2:3])
                 # print("Node " + str(self.id) + " Server received data:", observation[2:-1])
                 # print("_______________________________________")
-            self.conn.send(bytes('standard response', 'UTF-8'))
+                self.conn.send(bytes('standard response', 'UTF-8'))
+                self.observations_done.append(observation.serialize())
         except BrokenPipeError:
             pass
         return True
 
-    def __init__(self, conn, agent, agents, agent_behavior, weights, trust_thresholds, authorities, logger):
+    def __init__(self, conn, agent, agents, agent_behavior, weights, trust_thresholds, authorities, logger, observations_done):
         Thread.__init__(self)
         self.conn = conn
         self.agent = agent
@@ -49,6 +50,7 @@ class ClientThread(Thread):
         self.trust_thresholds = trust_thresholds
         self.authorities = authorities
         self.agents = agents
+        self.observations_done = observations_done
 
 
 class AgentServer(Thread):
@@ -57,12 +59,12 @@ class AgentServer(Thread):
         tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_server.bind((self.ip_address, self.port))
+        print(f"Agent '{self.agent}' listens on {self.ip_address}:{self.port}")
         while True:
             tcp_server.listen(4)
-            print(f"Agent '{self.agent}' listens on {self.ip_address}:{self.port}")
             (conn, (ip, port)) = tcp_server.accept()
             new_thread = ClientThread(conn, self.agent, self.agents, self.agent_behavior, self.weights,
-                                      self.trust_thresholds, self.authorities, self.logger)
+                                      self.trust_thresholds, self.authorities, self.logger, self.observations_done)
             new_thread.start()
             self.threads.append(new_thread)
             # self.threads = [thread for thread in self.threads if thread.is_alive()]
@@ -79,7 +81,8 @@ class AgentServer(Thread):
             #         self.threads.append(new_thread)
             # tcp_server.close()
 
-    def __init__(self, agent, ip_address, port, agents, agent_behavior, weights, trust_thresholds, authorities, logger):
+    def __init__(self, agent, ip_address, port, agents, agent_behavior, weights, trust_thresholds, authorities, logger,
+                 observations_done):
         Thread.__init__(self)
         self.agent = agent
         self.ip_address = ip_address
@@ -91,4 +94,5 @@ class AgentServer(Thread):
         self.trust_thresholds = trust_thresholds
         self.authorities = authorities
         self.agents = agents
+        self.observations_done = observations_done
 
