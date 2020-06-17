@@ -27,8 +27,12 @@ class ChannelsConnector(BasicConnector):
             message_json = json.loads(message)
             if message_json["type"] == "scenario_registration":
                 await self.pipe_dict["new_run"].coro_send(message_json)
-            elif message_json["scenario_run_id"] in self.pipe_dict.keys()\
-                    and not message_json["type"] == "scenario_registration":
+            elif message_json["type"] == "observation_done":
+                print(f"Received observation_done: {message}")
+                print(f"Current observations to exec: {self.observations_to_exec}")
+            elif message_json["scenario_run_id"] in self.pipe_dict.keys() \
+                    and not message_json["type"] == "scenario_registration" \
+                    and not message_json["type"] == "observation_done":
                 await self.pipe_dict[message_json["scenario_run_id"]].coro_send(message_json)
             else:
                 # TODO implement what happens if message does not fit in another case
@@ -50,8 +54,8 @@ class ChannelsConnector(BasicConnector):
         asyncio.get_event_loop().run_until_complete(self.register_at_director())
         asyncio.get_event_loop().run_until_complete(self.handler())
 
-    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict):
-        super().__init__(director_hostname, max_agents, send_queue, pipe_dict)
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, observations_to_exec):
+        super().__init__(director_hostname, max_agents, send_queue, pipe_dict, observations_to_exec)
         self.websocket = None
 
 

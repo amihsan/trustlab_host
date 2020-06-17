@@ -15,10 +15,11 @@ class BasicConnector(ABC, multiproc.Process):
     def run(self):
         pass
 
-    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict):
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, observations_to_exec):
         multiproc.Process.__init__(self)
         self.director_hostname = director_hostname
         self.max_agents = max_agents
         self.send_queue = send_queue
         self.pipe_dict = pipe_dict
+        self.observations_to_exec = observations_to_exec
 

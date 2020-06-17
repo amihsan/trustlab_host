@@ -91,7 +91,7 @@ class ScenarioRun(multiproc.Process):
         #     time.sleep(1)
 
     def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger,
-                 observations_done):
+                 observations_done, observations_to_exec):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -106,7 +106,8 @@ class ScenarioRun(multiproc.Process):
         self.scenario_runs = False
         self.observations_done = observations_done
         # filter observations that have to start at this supervisor
-        self.observations_to_exec = [obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor]
+        self.observations_to_exec = observations_to_exec
+        self.observations_to_exec.extend([obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor])
         
 
 class Supervisor:
@@ -120,21 +121,27 @@ class Supervisor:
             recv_end, send_end = aioprocessing.AioPipe(False)
             self.pipe_dict[new_run["scenario_run_id"]] = send_end
             # creating logger for new scenario run with already registered semaphore
-            index, logger_semaphore_dict = next((index, semaphore) for (index, semaphore) in
-                                                enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
+            index_logger, logger_semaphore_dict = next((index, semaphore) for (index, semaphore) in
+                                                       enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
             logger_semaphore = logger_semaphore_dict["semaphore"]
-            self.logger_semaphores[index]["used_by"] = new_run["scenario_run_id"]
+            self.logger_semaphores[index_logger]["used_by"] = new_run["scenario_run_id"]
             module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
             logger_class = getattr(module, self.logger_str)
             logger = logger_class(new_run["scenario_run_id"], logger_semaphore)
             # taking one observations_done list
-            index, done_dict = next((index, obs_done_dict) for (index, obs_done_dict) in
-                                    enumerate(self.observations_done) if obs_done_dict["used_by"] == "")
+            index_done, done_dict = next((index, obs_done_dict) for (index, obs_done_dict) in
+                                         enumerate(self.observations_done) if obs_done_dict["used_by"] == "")
             observations_done = done_dict["list"]
-            self.observations_done[index]["used_by"] = new_run["scenario_run_id"]
+            self.observations_done[index_done]["used_by"] = new_run["scenario_run_id"]
+            # taking one observations_to_exec list
+            index_exec, exec_dict = next((index, obs_exec_dict) for (index, obs_exec_dict) in
+                                         enumerate(self.observations_to_exec) if obs_exec_dict["used_by"] == "")
+            observations_to_exec = exec_dict["list"]
+            self.observations_to_exec[index_exec]["used_by"] = new_run["scenario_run_id"]
+            # create and start scenario_run
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
                                        Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end,
-                                       logger, observations_done)
+                                       logger, observations_done, observations_to_exec)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -155,10 +162,13 @@ class Supervisor:
         self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
         # setup observations_done lists
         self.observations_done = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
+        # setup observations_to_exec lists
+        self.observations_to_exec = self.manager.list(self.manager.dict(list=self.manager.list(), used_by="") for i in range(max_agents))
+        self.observations_to_exec = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
-        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict)
+        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict, self.observations_to_exec)
 
 
 if __name__ == '__main__':
