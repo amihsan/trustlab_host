@@ -26,7 +26,7 @@ class ChannelsConnector(BasicConnector):
         async for message in self.websocket:
             message_json = json.loads(message)
             if message_json["type"] == "scenario_registration":
-                await self.pipe_dict["new_run"].coro_send(message_json)
+                await self.pipe_dict["supervisor"].coro_send(message_json)
             elif message_json["scenario_run_id"] in self.pipe_dict.keys() \
                     and not message_json["type"] == "scenario_registration":
                 await self.pipe_dict[message_json["scenario_run_id"]].coro_send(message_json)

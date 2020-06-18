@@ -1,6 +1,6 @@
 import json
 import socket
-from threading import Thread
+from threading import Thread, Event
 from trust_metrics import calc_trust_metrics
 from artifacts.finalTrust import final_trust
 from scenario_manager import ScenarioManager
@@ -14,28 +14,31 @@ class ClientThread(Thread):
         try:
             message = self.conn.recv(2048)
             if message != '':
-                observation_str = message.decode('utf-8')
-                observation = Observation(**json.loads(observation_str))
-                self.logger.write_to_agent_message_log(observation)
-                calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agents,
-                                   self.agent_behavior, self.weights, self.trust_thresholds, self.authorities,
-                                   self.logger)
-                trust_value = final_trust(self.agent, observation.sender, self.logger)
-                self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
-                self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
-                self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)
-                # print("_______________________________________")
-                # # print("_____________________" + trust_value + "-__________")
-                #
-                # if float(trust_value) < self.scenario.trust_thresholds['lower_limit']:
-                #     untrustedAgents.append(other_agent)
-                #     print("+++" + current_agent + ", nodes beyond redemption: " + other_agent + "+++")
-                # if float(trust_value) > self.scenario.trust_thresholds['upper_limit'] or float(trust_value) > 1:
-                #     self.scenario.authority.append(current_agent[2:3])
-                # print("Node " + str(self.id) + " Server received data:", observation[2:-1])
-                # print("_______________________________________")
-                self.conn.send(bytes('standard response', 'UTF-8'))
-                self.observations_done.append(observation.serialize())
+                decoded_msg = message.decode('utf-8')
+                if decoded_msg == "END":
+                    self.conn.close()
+                else:
+                    observation = Observation(**json.loads(decoded_msg))
+                    self.logger.write_to_agent_message_log(observation)
+                    calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agents,
+                                       self.agent_behavior, self.weights, self.trust_thresholds, self.authorities,
+                                       self.logger)
+                    trust_value = final_trust(self.agent, observation.sender, self.logger)
+                    self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
+                    self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
+                    self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)
+                    # print("_______________________________________")
+                    # # print("_____________________" + trust_value + "-__________")
+                    #
+                    # if float(trust_value) < self.scenario.trust_thresholds['lower_limit']:
+                    #     untrustedAgents.append(other_agent)
+                    #     print("+++" + current_agent + ", nodes beyond redemption: " + other_agent + "+++")
+                    # if float(trust_value) > self.scenario.trust_thresholds['upper_limit'] or float(trust_value) > 1:
+                    #     self.scenario.authority.append(current_agent[2:3])
+                    # print("Node " + str(self.id) + " Server received data:", observation[2:-1])
+                    # print("_______________________________________")
+                    self.conn.send(bytes('standard response', 'UTF-8'))
+                    self.observations_done.append(observation.serialize())
         except BrokenPipeError:
             pass
         return True
@@ -60,9 +63,10 @@ class AgentServer(Thread):
         tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_server.bind((self.ip_address, self.port))
         print(f"Agent '{self.agent}' listens on {self.ip_address}:{self.port}")
-        while True:
+        while not self._stop_event.isSet():
             tcp_server.listen(4)
             (conn, (ip, port)) = tcp_server.accept()
+            print(f"Connection established with: {ip}:{port}")
             new_thread = ClientThread(conn, self.agent, self.agents, self.agent_behavior, self.weights,
                                       self.trust_thresholds, self.authorities, self.logger, self.observations_done)
             new_thread.start()
@@ -80,6 +84,16 @@ class AgentServer(Thread):
             #         new_thread.start()
             #         self.threads.append(new_thread)
             # tcp_server.close()
+        for thread in self.threads:
+            if thread.is_alive():
+                thread.join()
+
+    def end_server(self):
+        self._stop_event.set()
+        close_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        close_sock.connect((self.ip_address, self.port))
+        close_sock.send(bytes("END", 'UTF-8'))
+        close_sock.close()
 
     def __init__(self, agent, ip_address, port, agents, agent_behavior, weights, trust_thresholds, authorities, logger,
                  observations_done):
@@ -95,4 +109,6 @@ class AgentServer(Thread):
         self.authorities = authorities
         self.agents = agents
         self.observations_done = observations_done
+        self._stop_event = Event()
+        self.tcp_server = None
 
