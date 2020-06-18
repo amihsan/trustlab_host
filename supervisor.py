@@ -66,10 +66,18 @@ class ScenarioRun(multiproc.Process):
             if observation_done_dict is not None:
                 done_message = {
                     "type": "observation_done",
+                    "scenario_run_id": self.scenario_run_id,
                     "observation_id": observation_done_dict["observation_id"]
                 }
                 self.send_queue.put(done_message)
+                self.remove_observation_dependency([observation_done_dict["observation_id"]])
                 self.observations_done.remove(observation_done_dict)
+                print(f"Exec after exec observation: {self.observations_to_exec}")
+            if self.receive_pipe.poll():
+                message = self.receive_pipe.recv()
+                if message['type'] == 'observation_done':
+                    self.remove_observation_dependency(message["observations_done"])
+                    print(f"Exec after done message: {self.observations_to_exec}")
         # for thread in self.threads_client:
         #     thread.join()
         # for server in thread_server:
@@ -90,8 +98,12 @@ class ScenarioRun(multiproc.Process):
         #     client_thread.start()
         #     time.sleep(1)
 
+    def remove_observation_dependency(self, observations_done):
+        for observation in self.observations_to_exec:
+            observation["before"] = [obs_id for obs_id in observation["before"] if obs_id not in observations_done]
+
     def __init__(self, scenario_run_id, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger,
-                 observations_done, observations_to_exec):
+                 observations_done):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
         self.agents_at_supervisor = agents_at_supervisor
@@ -106,8 +118,7 @@ class ScenarioRun(multiproc.Process):
         self.scenario_runs = False
         self.observations_done = observations_done
         # filter observations that have to start at this supervisor
-        self.observations_to_exec = observations_to_exec
-        self.observations_to_exec.extend([obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor])
+        self.observations_to_exec = [obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor]
         
 
 class Supervisor:
@@ -133,15 +144,10 @@ class Supervisor:
                                          enumerate(self.observations_done) if obs_done_dict["used_by"] == "")
             observations_done = done_dict["list"]
             self.observations_done[index_done]["used_by"] = new_run["scenario_run_id"]
-            # taking one observations_to_exec list
-            index_exec, exec_dict = next((index, obs_exec_dict) for (index, obs_exec_dict) in
-                                         enumerate(self.observations_to_exec) if obs_exec_dict["used_by"] == "")
-            observations_to_exec = exec_dict["list"]
-            self.observations_to_exec[index_exec]["used_by"] = new_run["scenario_run_id"]
             # create and start scenario_run
             scenario_run = ScenarioRun(new_run["scenario_run_id"], new_run["agents_at_supervisor"],
                                        Scenario(**new_run["scenario"]), self.ip_address, self.send_queue, recv_end,
-                                       logger, observations_done, observations_to_exec)
+                                       logger, observations_done)
             self.scenario_runs.append(scenario_run)
             scenario_run.start()
 
@@ -162,13 +168,10 @@ class Supervisor:
         self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
         # setup observations_done lists
         self.observations_done = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
-        # setup observations_to_exec lists
-        self.observations_to_exec = self.manager.list(self.manager.dict(list=self.manager.list(), used_by="") for i in range(max_agents))
-        self.observations_to_exec = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
-        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict, self.observations_to_exec)
+        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict)
 
 
 if __name__ == '__main__':
