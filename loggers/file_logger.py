@@ -29,6 +29,13 @@ class FileLogger(BasicLogger):
             # TODO implement len_filter change on topic_lines
         return topic_lines
 
+    def readlines_from_trust_log(self, len_filter=None):
+        log_path = self.log_path / f"trust_log.txt"
+        with open(log_path.absolute(), "r+") as log_file:
+            log_lines = log_file.readlines()
+            # TODO implement len_filter change on log_lines
+        return log_lines
+
     def write_to_agent_history(self, agent, other_agent, history_value):
         log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:

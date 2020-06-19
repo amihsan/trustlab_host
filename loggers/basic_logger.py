@@ -16,6 +16,10 @@ class BasicLogger(ABC):
         pass
 
     @abstractmethod
+    def readlines_from_trust_log(self, len_filter=None):
+        pass
+
+    @abstractmethod
     def write_to_agent_history(self, agent, other_agent, history_value):
         pass
 
@@ -45,7 +49,8 @@ class BasicLogger(ABC):
 
     @staticmethod
     def get_current_time():
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # %f is current microsecond
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
 
     def __init__(self, scenario_run_id, semaphore):
         self.scenario_run_id = scenario_run_id

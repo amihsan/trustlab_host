@@ -67,7 +67,11 @@ class ScenarioRun(multiproc.Process):
                 done_message = {
                     "type": "observation_done",
                     "scenario_run_id": self.scenario_run_id,
-                    "observation_id": observation_done_dict["observation_id"]
+                    "observation_id": observation_done_dict["observation_id"],
+                    "receiver": observation_done_dict["receiver"],
+                    "trust_log": '<br>'.join(self.logger.readlines_from_trust_log()),
+                    "receiver_trust_log": '<br>'.join(self.logger.readlines_from_agent_trust_log(
+                        observation_done_dict["receiver"])),
                 }
                 self.send_queue.put(done_message)
                 self.remove_observation_dependency([observation_done_dict["observation_id"]])
