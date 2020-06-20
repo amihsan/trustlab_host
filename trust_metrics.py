@@ -26,7 +26,7 @@ def calc_trust_metrics(agent, other_agent, current_topic, agent_behavior, weight
         authority_value = format(weights["authority"] * authority(), '.2f')
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
     if 'popularity' in agent_behavior:
-        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, discovery, trust_thresholds['cooperation'], logger)), '.2f')
+        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, discovery, logger)), '.2f')
         logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
     if 'recommendation' in agent_behavior:
         recommendation_value = format(weights["recommendation"] * recommendation(agent, other_agent, discovery, trust_thresholds['cooperation'], logger), '.2f')

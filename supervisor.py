@@ -93,25 +93,6 @@ class ScenarioRun(multiproc.Process):
                         if thread.is_alive():
                             thread.join()
                     self.scenario_runs = False
-        # for thread in self.threads_client:
-        #     thread.join()
-        # for server in thread_server:
-        #     for thread in server.threads:
-        #         thread.join()
-        # # ServerStatus.shutdown_server()
-        # # for server in thread_server:
-        # #     server.join()
-        # # while len(threads_client) > 0 or any([len(server.threads) > 0 for server in thread_server]):
-        # #     threads_client = [thread for thread in threads_client if thread.is_alive()]
-        # return Logging.LOG_PATH / "director_log.txt", Logging.LOG_PATH / "trust_log.txt"
-        # for observation_dict in self.scenario.observations:
-        #     # source, target, author, topic, message = observation.split(",", 4)
-        #     observation = Observation(**observation_dict)
-        #     ip, port = self.discovery[observation.receiver].split(":")
-        #     client_thread = AgentClient(ip, port, json.dumps(observation_dict))
-        #     # threads_client.append(client_thread)
-        #     client_thread.start()
-        #     time.sleep(1)
         end_message = {
             'type': 'scenario_end',
             'scenario_run_id': self.scenario_run_id
@@ -145,7 +126,6 @@ class ScenarioRun(multiproc.Process):
 class Supervisor:
     def run(self):
         self.connector.start()
-        # async_to_sync(self.connector.register_at_director)(self.max_agents)
         while self.takes_new_scenarios:
             received_msg = self.receive_pipe.recv()
             if received_msg['type'] == "scenario_end":
