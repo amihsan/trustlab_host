@@ -18,7 +18,7 @@ class AgentClient(Thread):
     def __init__(self, remote_ip, remote_port, message):
         Thread.__init__(self)
         self.remote_ip = remote_ip
-        self.remote_port = int(remote_port)
+        self.remote_port = remote_port
         self.message = message
 
 

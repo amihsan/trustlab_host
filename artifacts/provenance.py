@@ -1,7 +1,7 @@
 ###############################################
 #Provenance check
 
-from artifacts.directxp import direct_experience
+from artifacts.direct_experience import direct_experience
 
 
 def provenance(ID, author):

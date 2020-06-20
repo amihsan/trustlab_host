@@ -32,7 +32,7 @@ class ScenarioRun(multiproc.Process):
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
-            server = AgentServer(agent, self.ip_address, free_port, self.scenario.agents,
+            server = AgentServer(agent, self.ip_address, free_port,
                                  self.scenario.metrics_per_agent[agent], self.scenario.weights,
                                  self.scenario.trust_thresholds, self.scenario.authorities, self.logger,
                                  self.observations_done)
@@ -42,6 +42,8 @@ class ScenarioRun(multiproc.Process):
                              "discovery": local_discovery}
         self.send_queue.put(discovery_message)
         self.discovery = self.receive_pipe.recv()["discovery"]
+        for thread in self.threads_server:
+            thread.set_discovery(self.discovery)
         print(self.discovery)
 
     def assert_scenario_start(self):
@@ -58,7 +60,7 @@ class ScenarioRun(multiproc.Process):
             if observation_dict is not None:
                 observation = Observation(**observation_dict)
                 ip, port = self.discovery[observation.receiver].split(":")
-                client_thread = AgentClient(ip, port, json.dumps(observation_dict))
+                client_thread = AgentClient(ip, int(port), json.dumps(observation_dict))
                 self.threads_client.append(client_thread)
                 client_thread.start()
                 self.observations_to_exec.remove(observation_dict)

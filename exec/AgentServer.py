@@ -2,9 +2,9 @@ import json
 import socket
 from threading import Thread, Event
 from trust_metrics import calc_trust_metrics
-from artifacts.finalTrust import final_trust
-from scenario_manager import ScenarioManager
+from artifacts.final_trust import final_trust
 from models import Observation
+from artifacts.recommendation import recommendation_response
 
 untrustedAgents = []
 
@@ -17,12 +17,21 @@ class ClientThread(Thread):
                 decoded_msg = message.decode('utf-8')
                 if decoded_msg == "END":
                     self.conn.close()
+                elif decoded_msg.startswith("aTLAS_trust_protocol::"):
+                    trust_protocol_head, trust_protocol_message = decoded_msg.split("::")
+                    trust_operation = trust_protocol_message.split("_")[0]
+                    trust_value = 0.0
+                    if trust_operation == "recommendation":
+                        trust_value = recommendation_response(self.agent, trust_protocol_message.split("_")[1],
+                                                              self.logger)
+                    trust_response = f"{trust_protocol_head}::{trust_protocol_message}::{trust_value}"
+                    self.conn.send(bytes(trust_response, 'UTF-8'))
                 else:
                     observation = Observation(**json.loads(decoded_msg))
                     self.logger.write_to_agent_message_log(observation)
-                    calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agents,
-                                       self.agent_behavior, self.weights, self.trust_thresholds, self.authorities,
-                                       self.logger)
+                    calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agent_behavior,
+                                       self.weights, self.trust_thresholds, self.authorities,
+                                       self.logger, self.discovery)
                     trust_value = final_trust(self.agent, observation.sender, self.logger)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
@@ -43,7 +52,8 @@ class ClientThread(Thread):
             pass
         return True
 
-    def __init__(self, conn, agent, agents, agent_behavior, weights, trust_thresholds, authorities, logger, observations_done):
+    def __init__(self, conn, agent, agent_behavior, weights, trust_thresholds, authorities, logger,
+                 observations_done, discovery):
         Thread.__init__(self)
         self.conn = conn
         self.agent = agent
@@ -52,8 +62,8 @@ class ClientThread(Thread):
         self.weights = weights
         self.trust_thresholds = trust_thresholds
         self.authorities = authorities
-        self.agents = agents
         self.observations_done = observations_done
+        self.discovery = discovery
 
 
 class AgentServer(Thread):
@@ -67,8 +77,8 @@ class AgentServer(Thread):
             tcp_server.listen(4)
             (conn, (ip, port)) = tcp_server.accept()
             print(f"Connection established with: {ip}:{port}")
-            new_thread = ClientThread(conn, self.agent, self.agents, self.agent_behavior, self.weights,
-                                      self.trust_thresholds, self.authorities, self.logger, self.observations_done)
+            new_thread = ClientThread(conn, self.agent, self.agent_behavior, self.weights, self.trust_thresholds,
+                                      self.authorities, self.logger, self.observations_done, self.discovery)
             new_thread.start()
             self.threads.append(new_thread)
             # self.threads = [thread for thread in self.threads if thread.is_alive()]
@@ -95,7 +105,10 @@ class AgentServer(Thread):
         close_sock.send(bytes("END", 'UTF-8'))
         close_sock.close()
 
-    def __init__(self, agent, ip_address, port, agents, agent_behavior, weights, trust_thresholds, authorities, logger,
+    def set_discovery(self, discovery):
+        self.discovery = discovery
+
+    def __init__(self, agent, ip_address, port, agent_behavior, weights, trust_thresholds, authorities, logger,
                  observations_done):
         Thread.__init__(self)
         self.agent = agent
@@ -107,8 +120,7 @@ class AgentServer(Thread):
         self.weights = weights
         self.trust_thresholds = trust_thresholds
         self.authorities = authorities
-        self.agents = agents
         self.observations_done = observations_done
         self._stop_event = Event()
-        self.tcp_server = None
+        self.discovery = {}
 

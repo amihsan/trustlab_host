@@ -1,5 +1,5 @@
 from artifacts.recommendation import recommendation
-from artifacts.directxp import direct_experience
+from artifacts.direct_experience import direct_experience
 from artifacts.popularity import popularity
 from artifacts.authority import authority
 from artifacts.agreement import agreement
@@ -17,8 +17,8 @@ from artifacts.topic import topic
 # ---This is needed to calculate the final trust value
 
 
-def calc_trust_metrics(agent, other_agent, current_topic, agents, agent_behavior, weights, trust_thresholds,
-                       authorities, logger):
+def calc_trust_metrics(agent, other_agent, current_topic, agent_behavior, weights, trust_thresholds,
+                       authorities, logger, discovery):
     if 'direct experience' in agent_behavior:
         direct_experience_value = format(weights["direct experience"] * direct_experience(agent, other_agent, logger), '.2f')
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
@@ -26,10 +26,10 @@ def calc_trust_metrics(agent, other_agent, current_topic, agents, agent_behavior
         authority_value = format(weights["authority"] * authority(), '.2f')
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
     if 'popularity' in agent_behavior:
-        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, agents, trust_thresholds['cooperation'], logger)), '.2f')
+        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, discovery, trust_thresholds['cooperation'], logger)), '.2f')
         logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
     if 'recommendation' in agent_behavior:
-        recommendation_value = format(weights["recommendation"] * recommendation(agent, other_agent, agents, trust_thresholds['cooperation'], logger), '.2f')
+        recommendation_value = format(weights["recommendation"] * recommendation(agent, other_agent, discovery, trust_thresholds['cooperation'], logger), '.2f')
         logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
     if 'topic' in agent_behavior:
         topic_value = format(weights["topic"] * topic(agent, other_agent, current_topic, logger), '.2f')
