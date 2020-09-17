@@ -5,8 +5,8 @@ from contextlib import closing
 import multiprocessing as multiproc
 
 from models import Observation
-from exec.AgentServer import AgentServer
-from exec.AgentClient import AgentClient
+from exec.agent_server import AgentServer
+from exec.agent_client import AgentClient
 
 
 class ScenarioRun(multiproc.Process):

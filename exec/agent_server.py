@@ -1,7 +1,7 @@
 import socket
 from threading import Thread, Event
 
-from .ClientThread import ClientThread
+from .client_thread import ClientThread
 
 
 class AgentServer(Thread):
