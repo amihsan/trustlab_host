@@ -1,6 +1,5 @@
 import json
 import socket
-import time
 from contextlib import closing
 import multiprocessing as multiproc
 
