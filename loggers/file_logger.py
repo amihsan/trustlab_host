@@ -5,36 +5,45 @@ from config import LOG_PATH
 
 
 class FileLogger(BasicLogger):
-    LOG_PATH = Path("log/")
     if not LOG_PATH.is_dir():
         os.mkdir(LOG_PATH.absolute())
+
+    @staticmethod
+    def apply_len_filter(lines, len_filter):
+        len_filter = 0 - len_filter if len_filter > 0 else len_filter
+        lines = lines[len_filter:]
+        return lines
 
     def readlines_from_agent_history(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_history.txt"
         with open(log_path.absolute(), "r+") as history_file:
             history_lines = history_file.readlines()
-            # TODO implement len_filter change on history_lines
+            if len_filter and type(len_filter) is int:
+                history_lines = self.apply_len_filter(history_lines, len_filter)
         return history_lines
 
     def readlines_from_agent_trust_log(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_trust_log.txt"
         with open(log_path.absolute(), "r+") as trust_log_file:
             trust_log_lines = trust_log_file.readlines()
-            # TODO implement len_filter change on trust_log_lines
+            if len_filter and type(len_filter) is int:
+                trust_log_lines = self.apply_len_filter(trust_log_lines, len_filter)
         return trust_log_lines
 
     def readlines_from_agent_topic_trust(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_topic.txt"
         with open(log_path.absolute(), "r+") as topic_file:
             topic_lines = topic_file.readlines()
-            # TODO implement len_filter change on topic_lines
+            if len_filter and type(len_filter) is int:
+                topic_lines = self.apply_len_filter(topic_lines, len_filter)
         return topic_lines
 
     def readlines_from_trust_log(self, len_filter=None):
         log_path = self.log_path / f"trust_log.txt"
         with open(log_path.absolute(), "r+") as log_file:
             log_lines = log_file.readlines()
-            # TODO implement len_filter change on log_lines
+            if len_filter and type(len_filter) is int:
+                log_lines = self.apply_len_filter(log_lines, len_filter)
         return log_lines
 
     def write_to_agent_history(self, agent, other_agent, history_value):
