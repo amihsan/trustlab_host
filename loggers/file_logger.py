@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from loggers.basic_logger import BasicLogger
+from config import LOG_PATH
 
 
 class FileLogger(BasicLogger):
@@ -95,7 +96,7 @@ class FileLogger(BasicLogger):
         super().__init__(scenario_run_id, semaphore)
         split_index = len(scenario_run_id.split("_")[0]) + 1  # index to cut constant of runId -> 'scenarioRun_'
         self.folder_name = scenario_run_id[split_index:]
-        self.log_path = Path("log/" + self.folder_name + "/")
+        self.log_path = Path(f"{LOG_PATH}/{self.folder_name}/")
         if not self.log_path.is_dir():
             os.mkdir(self.log_path.absolute())
 
