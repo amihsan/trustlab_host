@@ -5,8 +5,8 @@ from config import LOG_PATH
 
 
 class FileLogger(BasicLogger):
-    if not LOG_PATH.is_dir():
-        os.mkdir(LOG_PATH.absolute())
+    if not LOG_PATH.exists():
+        os.mkdir(LOG_PATH)
 
     @staticmethod
     def apply_len_filter(lines, len_filter):
