@@ -49,4 +49,3 @@ https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/demo/
 
 * aTLAS main repository \
 https://gitlab.hrz.tu-chemnitz.de/vsr/phd/siegert/trustlab
-
