@@ -22,15 +22,16 @@ class ScenarioRun(multiproc.Process):
         # logging for all Agents their trust history and their topic values if given
         for agent in self.scenario.agents:
             self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
-            if self.scenario.topics and agent in self.scenario.topics:
-                self.logger.write_bulk_to_agent_topic_trust(agent, self.scenario.topics[agent])
+            if self.scenario.agent_uses_metric(agent, 'content_trust.topic'):
+                self.logger.write_bulk_to_agent_topic_trust(agent, self.scenario.agents_with_metric(
+                    'content_trust.topic')[agent])
         # creating servers
         for agent in self.agents_at_supervisor:
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
             server = AgentServer(agent, self.ip_address, free_port,
                                  self.scenario.metrics_per_agent[agent], self.scenario.weights,
-                                 self.scenario.trust_thresholds, self.scenario.authorities, self.logger,
+                                 self.scenario.trust_thresholds, self.logger,
                                  self.observations_done)
             self.threads_server.append(server)
             server.start()

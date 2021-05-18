@@ -35,8 +35,7 @@ class ClientThread(Thread):
                     observation = Observation(**json.loads(decoded_msg))
                     self.logger.write_to_agent_message_log(observation)
                     calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agent_behavior,
-                                       self.weights, self.trust_thresholds, self.authorities,
-                                       self.logger, self.discovery)
+                                       self.weights, self.trust_thresholds, self.logger, self.discovery)
                     trust_value = weighted_avg_final_trust(self.agent, observation.sender, self.logger)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
@@ -53,8 +52,7 @@ class ClientThread(Thread):
             pass
         return True
 
-    def __init__(self, conn, agent, agent_behavior, weights, trust_thresholds, authorities, logger,
-                 observations_done, discovery):
+    def __init__(self, conn, agent, agent_behavior, weights, trust_thresholds, logger, observations_done, discovery):
         Thread.__init__(self)
         self.conn = conn
         self.agent = agent
@@ -62,6 +60,5 @@ class ClientThread(Thread):
         self.agent_behavior = agent_behavior
         self.weights = weights
         self.trust_thresholds = trust_thresholds
-        self.authorities = authorities
         self.observations_done = observations_done
         self.discovery = discovery

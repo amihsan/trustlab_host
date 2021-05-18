@@ -37,6 +37,19 @@ class Scenario(Interface):
     weights = dict
     metrics_per_agent = dict
 
+    def agent_uses_metric(self, agent, metric_name):
+        return metric_name in self.metrics_per_agent[agent].keys()
+
+    def any_agents_use_metric(self, metric_name):
+        return any(metric_name in metrics.keys() for agent, metrics in self.metrics_per_agent.items())
+
+    def agents_with_metric(self, metric_name):
+        agent_dict = {}
+        if metric_name == 'content_trust.topic' or metric_name == 'content_trust.authority':
+            agent_dict = {agent: metrics[metric_name] for agent, metrics in self.metrics_per_agent.items()
+                          if metric_name in metrics.keys()}
+        return agent_dict
+
     @staticmethod
     def check_consistency(name, agents, observations):
         if len(name) == 0:

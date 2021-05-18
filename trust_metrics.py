@@ -11,13 +11,12 @@ from artifacts.content_trust.topic import topic as content_trust_topic
 # ---This is needed to calculate the final trust value
 
 
-def calc_trust_metrics(agent, other_agent, current_topic, agent_behavior, weights, trust_thresholds,
-                       authorities, logger, discovery):
+def calc_trust_metrics(agent, other_agent, current_topic, agent_behavior, weights, trust_thresholds, logger, discovery):
     if 'content_trust.direct_experience' in agent_behavior:
-        direct_experience_value = format(weights["direct experience"] * content_trust_direct_experience(agent, other_agent, logger), '.2f')
+        direct_experience_value = format(weights["content_trust.direct_experience"] * content_trust_direct_experience(agent, other_agent, logger), '.2f')
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
-    if 'content_trust.authority' in agent_behavior and other_agent in authorities[agent]:
-        authority_value = format(weights["authority"] * content_trust_authority(), '.2f')
+    if 'content_trust.authority' in agent_behavior and other_agent in agent_behavior['content_trust.authority']:
+        authority_value = format(weights["content_trust.authority"] * content_trust_authority(), '.2f')
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
     if 'content_trust.popularity' in agent_behavior:
         popularity_value = format(float(weights["content_trust.popularity"]) * float(content_trust_popularity(agent, other_agent, discovery, logger)), '.2f')
