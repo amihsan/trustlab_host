@@ -2,10 +2,10 @@ import json
 from threading import Thread
 
 from trust_metrics import calc_trust_metrics
-from artifacts.final_trust import final_trust
+from artifacts.final_trust import weighted_avg_final_trust
 from models import Observation
-from artifacts.recommendation import recommendation_response
-from artifacts.popularity import popularity_response
+from artifacts.content_trust.recommendation import recommendation_response
+from artifacts.content_trust.popularity import popularity_response
 
 
 untrustedAgents = []
@@ -37,7 +37,7 @@ class ClientThread(Thread):
                     calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agent_behavior,
                                        self.weights, self.trust_thresholds, self.authorities,
                                        self.logger, self.discovery)
-                    trust_value = final_trust(self.agent, observation.sender, self.logger)
+                    trust_value = weighted_avg_final_trust(self.agent, observation.sender, self.logger)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
                     self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)

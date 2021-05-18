@@ -1,14 +1,8 @@
-from artifacts.recommendation import recommendation
-from artifacts.direct_experience import direct_experience
-from artifacts.popularity import popularity
-from artifacts.authority import authority
-from artifacts.agreement import agreement
-from artifacts.age import age_check
-from artifacts.recency import recency
-from artifacts.related_recources import related
-from artifacts.specificity import specificity
-from artifacts.provenance import provenance
-from artifacts.topic import topic
+from artifacts.content_trust.recommendation import recommendation as content_trust_recommendation
+from artifacts.content_trust.direct_experience import direct_experience as content_trust_direct_experience
+from artifacts.content_trust.popularity import popularity as content_trust_popularity
+from artifacts.content_trust.authority import authority as content_trust_authority
+from artifacts.content_trust.topic import topic as content_trust_topic
 
 ############################################################################
 # ---The trust_initialization function starts with the imported behavior models
@@ -19,20 +13,20 @@ from artifacts.topic import topic
 
 def calc_trust_metrics(agent, other_agent, current_topic, agent_behavior, weights, trust_thresholds,
                        authorities, logger, discovery):
-    if 'direct experience' in agent_behavior:
-        direct_experience_value = format(weights["direct experience"] * direct_experience(agent, other_agent, logger), '.2f')
+    if 'content_trust.direct_experience' in agent_behavior:
+        direct_experience_value = format(weights["direct experience"] * content_trust_direct_experience(agent, other_agent, logger), '.2f')
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
-    if 'authority' in agent_behavior and other_agent in authorities[agent]:
-        authority_value = format(weights["authority"] * authority(), '.2f')
+    if 'content_trust.authority' in agent_behavior and other_agent in authorities[agent]:
+        authority_value = format(weights["authority"] * content_trust_authority(), '.2f')
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
-    if 'popularity' in agent_behavior:
-        popularity_value = format(float(weights["popularity"]) * float(popularity(agent, other_agent, discovery, logger)), '.2f')
+    if 'content_trust.popularity' in agent_behavior:
+        popularity_value = format(float(weights["content_trust.popularity"]) * float(content_trust_popularity(agent, other_agent, discovery, logger)), '.2f')
         logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
-    if 'recommendation' in agent_behavior:
-        recommendation_value = format(weights["recommendation"] * recommendation(agent, other_agent, discovery, trust_thresholds['cooperation'], logger), '.2f')
+    if 'content_trust.recommendation' in agent_behavior:
+        recommendation_value = format(weights["content_trust.recommendation"] * content_trust_recommendation(agent, other_agent, discovery, trust_thresholds['cooperation'], logger), '.2f')
         logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
-    if 'topic' in agent_behavior:
-        topic_value = format(weights["topic"] * topic(agent, other_agent, current_topic, logger), '.2f')
+    if 'content_trust.topic' in agent_behavior:
+        topic_value = format(weights["content_trust.topic"] * content_trust_topic(agent, other_agent, current_topic, logger), '.2f')
         logger.write_to_agent_trust_log(agent, "topic", other_agent, topic_value)
 
     # if 'age' in agent_behavior:
