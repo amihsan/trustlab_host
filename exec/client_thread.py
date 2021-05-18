@@ -1,8 +1,7 @@
 import json
 from threading import Thread
 
-from trust_metrics import calc_trust_metrics
-from artifacts.final_trust import weighted_avg_final_trust
+from trust_evaluation import eval_trust
 from models import Observation
 from artifacts.content_trust.recommendation import recommendation_response
 from artifacts.content_trust.popularity import popularity_response
@@ -34,9 +33,9 @@ class ClientThread(Thread):
                 else:
                     observation = Observation(**json.loads(decoded_msg))
                     self.logger.write_to_agent_message_log(observation)
-                    calc_trust_metrics(self.agent, observation.sender, observation.topic, self.agent_behavior,
-                                       self.weights, self.trust_thresholds, self.logger, self.discovery)
-                    trust_value = weighted_avg_final_trust(self.agent, observation.sender, self.logger)
+                    trust_value = eval_trust(self.agent, observation.sender, observation.topic,
+                                             self.agent_behavior, self.trust_thresholds, self.logger,
+                                             self.discovery)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
                     self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)
@@ -52,13 +51,12 @@ class ClientThread(Thread):
             pass
         return True
 
-    def __init__(self, conn, agent, agent_behavior, weights, trust_thresholds, logger, observations_done, discovery):
+    def __init__(self, conn, agent, agent_behavior, trust_thresholds, logger, observations_done, discovery):
         Thread.__init__(self)
         self.conn = conn
         self.agent = agent
         self.logger = logger
         self.agent_behavior = agent_behavior
-        self.weights = weights
         self.trust_thresholds = trust_thresholds
         self.observations_done = observations_done
         self.discovery = discovery

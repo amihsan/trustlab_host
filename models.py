@@ -34,7 +34,6 @@ class Scenario(Interface):
     description = str
     history = dict
     trust_thresholds = dict
-    weights = dict
     metrics_per_agent = dict
 
     def agent_uses_metric(self, agent, metric_name):
@@ -64,9 +63,10 @@ class Scenario(Interface):
                     "author" in observation.keys() or not "topic" in observation.keys() or not \
                     "message" in observation.keys() or not "before" in observation.keys():
                 raise ValueError("Each Observation requires to be dict with all its attributes.")
+        # TODO: check for correct metrics_per_agent setup
 
-    def __init__(self, name, agents, observations, history, trust_thresholds, weights,
-                 metrics_per_agent, description="No one described this scenario so far."):
+    def __init__(self, name, agents, observations, history, trust_thresholds, metrics_per_agent,
+                 description="No one described this scenario so far."):
         if history is None or len(history.keys()) == 0:
             # TODO history should be able to be None at default and then set to 0 for all agents
             #  -> maybe even not completely set and filled up with 0
@@ -77,11 +77,10 @@ class Scenario(Interface):
         self.observations = observations
         self.history = history
         self.trust_thresholds = trust_thresholds
-        self.weights = weights
         self.metrics_per_agent = metrics_per_agent
         self.description = description
         super().__init__(name=name, agents=agents, observations=observations, history=history,
-                         trust_thresholds=trust_thresholds, weights=weights, metrics_per_agent=metrics_per_agent,
+                         trust_thresholds=trust_thresholds, metrics_per_agent=metrics_per_agent,
                          description=description)
 
     def __str__(self):

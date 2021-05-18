@@ -2,13 +2,13 @@
 # values in the log file and the corresponding weight given by the scenario file
 
 
-def weighted_avg_final_trust(agent, other_agent, logger):
-    trust_values = []
-    trust_log_lines = logger.readlines_from_agent_trust_log(agent)
-    for line in trust_log_lines:
-        if line.split(" ")[-2][1:-2] == other_agent:
-            trust_values.append(float(line.split(" ")[-1]))
-    trust = sum(trust_values) / len(trust_values) if len(trust_values) > 0 else 0.00
+def weighted_avg_final_trust(trust_values, weights):
+    weighted_trust_values = []
+    for metric, value in trust_values.items():
+        weight = weights[metric] if metric in weights.keys() else 1.0
+        weighted_trust_values.append(weight * value)
+    # TODO: set middle of used trust scale instead of 0.0 in following else
+    trust = sum(weighted_trust_values) / len(weighted_trust_values) if len(weighted_trust_values) > 0 else 0.00
     return trust
 
 
