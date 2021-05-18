@@ -47,6 +47,10 @@ class BasicLogger(ABC):
     def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
         pass
 
+    @abstractmethod
+    def line_about_other_agent(self, line, other_agent):
+        pass
+
     @staticmethod
     def get_current_time():
         # %f is current microsecond
