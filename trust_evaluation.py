@@ -11,7 +11,7 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, trust_threshol
     calculate trust metrics
     """
     trust_values = {}
-    if 'content_trust.direct_experience' in agent_behavior:
+    if 'content_trust.direct_experience' in agent_behavior.keys():
         direct_experience_value = content_trust_direct_experience(agent, other_agent, logger)
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
         trust_values['content_trust.direct_experience'] = direct_experience_value
@@ -78,6 +78,8 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, trust_threshol
     """
     final Trust calculations
     """
+    # delete all metrics from final trust calculation, which results are set to None
+    trust_values = {metric: value for metric, value in trust_values.items() if value is not None}
     final_trust_value = 0.0  # TODO: set to middle of given trust scale
     if agent_behavior['__final__']:
         if agent_behavior['__final__']['name'] == 'weighted_average':
