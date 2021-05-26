@@ -2,7 +2,7 @@ import json
 from threading import Thread
 
 from trust_evaluation import eval_trust
-from models import Observation
+from models import Observation, init_scale_object
 from artifacts.content_trust.recommendation import recommendation_response
 from artifacts.content_trust.popularity import popularity_response
 
@@ -51,12 +51,12 @@ class ClientThread(Thread):
             pass
         return True
 
-    def __init__(self, conn, agent, agent_behavior, trust_thresholds, logger, observations_done, discovery):
+    def __init__(self, conn, agent, agent_behavior, scale, logger, observations_done, discovery):
         Thread.__init__(self)
         self.conn = conn
         self.agent = agent
         self.logger = logger
         self.agent_behavior = agent_behavior
-        self.trust_thresholds = trust_thresholds
+        self.scale = init_scale_object(scale)
         self.observations_done = observations_done
         self.discovery = discovery

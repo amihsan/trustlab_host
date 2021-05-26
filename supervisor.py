@@ -27,7 +27,7 @@ class Supervisor:
                 self.observations_done[index_done]["used_by"] = ""
                 self.send_queue.put(received_msg)
             elif received_msg['type'] == 'scenario_registration':
-                # TODO check if enough agents are left and scenario can be really started
+                # TODO: check if enough agents are left and scenario can be really started
                 new_scenario_run_id = received_msg["scenario_run_id"]
                 self.agents_in_use += len(received_msg["agents_at_supervisor"])
                 recv_end, send_end = aioprocessing.AioPipe(False)

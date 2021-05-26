@@ -30,7 +30,7 @@ class ScenarioRun(multiproc.Process):
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
             server = AgentServer(agent, self.ip_address, free_port, self.scenario.metrics_per_agent[agent],
-                                 self.scenario.trust_thresholds, self.logger, self.observations_done)
+                                 self.scenario.scales_per_agent[agent], self.logger, self.observations_done)
             self.threads_server.append(server)
             server.start()
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
