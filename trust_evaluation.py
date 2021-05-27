@@ -6,29 +6,29 @@ from artifacts.content_trust.topic import topic as content_trust_topic
 from artifacts.final_trust import weighted_avg_final_trust
 
 
-def eval_trust(agent, other_agent, current_topic, agent_behavior, trust_thresholds, logger, discovery):
+def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger, discovery):
     """
     calculate trust metrics
     """
     trust_values = {}
     if 'content_trust.direct_experience' in agent_behavior.keys():
-        direct_experience_value = content_trust_direct_experience(agent, other_agent, logger)
+        direct_experience_value = content_trust_direct_experience(agent, other_agent, scale, logger)
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
         trust_values['content_trust.direct_experience'] = direct_experience_value
     if 'content_trust.authority' in agent_behavior and other_agent in agent_behavior['content_trust.authority']:
-        authority_value = format(content_trust_authority(), '.2f')
+        authority_value = format(content_trust_authority(scale), '.2f')
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
         trust_values['content_trust.authority'] = authority_value
     if 'content_trust.popularity' in agent_behavior:
-        popularity_value = content_trust_popularity(agent, other_agent, discovery, logger)
+        popularity_value = content_trust_popularity(agent, other_agent, discovery, scale, logger)
         logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
         trust_values['content_trust.popularity'] = popularity_value
     if 'content_trust.recommendation' in agent_behavior:
-        recommendation_value = content_trust_recommendation(agent, other_agent, discovery, trust_thresholds['cooperation'], logger)
+        recommendation_value = content_trust_recommendation(agent, other_agent, discovery, scale, logger)
         logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
         trust_values['content_trust.recommendation'] = recommendation_value
     if 'content_trust.topic' in agent_behavior:
-        topic_value = content_trust_topic(agent, other_agent, current_topic, logger)
+        topic_value = content_trust_topic(agent, other_agent, current_topic, scale, logger)
         logger.write_to_agent_trust_log(agent, "topic", other_agent, topic_value)
         trust_values['content_trust.topic'] = topic_value
     # # old code from internship (do not use without refactoring

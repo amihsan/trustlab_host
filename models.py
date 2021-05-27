@@ -46,6 +46,14 @@ class Observation(UpdatableInterface):
 
 
 class Scale(ABC):
+    @abstractmethod
+    def minimum_to_trust_others(self):
+        pass
+
+    @abstractmethod
+    def default_value(self):
+        pass
+
     def __init__(self):
         if hasattr(self, 'maximum') and hasattr(self, 'minimum'):
             if type(self.maximum) is float and type(self.minimum) is float:

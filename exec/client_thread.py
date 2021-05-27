@@ -24,21 +24,22 @@ class ClientThread(Thread):
                     trust_value = 0.0
                     if trust_operation == "recommendation":
                         trust_value = recommendation_response(self.agent, trust_protocol_message.split("_")[1],
-                                                              self.logger)
+                                                              self.scale, self.logger)
                     elif trust_operation == "popularity":
-                        trust_value = popularity_response(self.agent, self.discovery,
-                                                          self.trust_thresholds['cooperation'], self.logger)
+                        trust_value = popularity_response(self.agent, self.discovery, self.scale, self.logger)
                     trust_response = f"{trust_protocol_head}::{trust_protocol_message}::{trust_value}"
                     self.conn.send(bytes(trust_response, 'UTF-8'))
                 else:
                     observation = Observation(**json.loads(decoded_msg))
                     self.logger.write_to_agent_message_log(observation)
                     trust_value = eval_trust(self.agent, observation.sender, observation.topic,
-                                             self.agent_behavior, self.trust_thresholds, self.logger,
+                                             self.agent_behavior, self.scale, self.logger,
                                              self.discovery)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
-                    self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value)
+                    self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic,
+                                                           trust_value)
                     self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)
+                    # TODO how to work with trust decisions in general?
                     # if float(trust_value) < self.scenario.trust_thresholds['lower_limit']:
                     #     untrustedAgents.append(other_agent)
                     #     print("+++" + current_agent + ", nodes beyond redemption: " + other_agent + "+++")

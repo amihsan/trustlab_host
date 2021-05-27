@@ -9,6 +9,12 @@ class MarshBriggsScale(Scale, UpdatableInterface):
     cooperation = float
     forgivability = float
 
+    def minimum_to_trust_others(self):
+        return self.minimum
+
+    def default_value(self):
+        return self.default
+
     def __init__(self, minimum, maximum, default=0.0, cooperation=0.5, forgivability=-0.5,
                  name="Trust Scale by Marsh and Briggs (2009)"):
         self.name = name
