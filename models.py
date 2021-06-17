@@ -9,6 +9,9 @@ from pathlib import Path
 
 
 class UpdatableInterface(Interface):
+    """
+    Makes Interface objects updatable by updating the self.kwargs at start of serialization.
+    """
     def serialize(self):
         for key in self.kwargs.keys():
             value = getattr(self, key)
@@ -48,10 +51,18 @@ class Observation(UpdatableInterface):
 class Scale(ABC):
     @abstractmethod
     def minimum_to_trust_others(self):
+        """
+        :return: is the minimum another party has to have to be declared as trusted or to be cooperated with
+        :rtype: float or int
+        """
         pass
 
     @abstractmethod
     def default_value(self):
+        """
+        :return: represents the default value for any new or unknown party
+        :rtype: float or int
+        """
         pass
 
     def __init__(self):
@@ -77,34 +88,66 @@ class Scenario(UpdatableInterface):
     metrics_per_agent = dict
 
     def agent_uses_metric(self, agent, metric_name):
+        """
+        :param agent: the agent's descriptor
+        :param metric_name: the metric's name
+        :type agent: str
+        :type metric_name: str
+        :return: whether metric name is used by agent
+        :rtype: bool
+        """
         return metric_name in self.metrics_per_agent[agent].keys()
 
     def any_agents_use_metric(self, metric_name):
+        """
+        :param metric_name: the metric's name
+        :type metric_name: str
+        :return: whether metric_name is used by any agent in the scenario
+        :rtype: bool
+        """
         return any(metric_name in metrics.keys() for agent, metrics in self.metrics_per_agent.items())
 
     def agents_with_metric(self, metric_name):
+        """
+        :param metric_name: the metric's name
+        :type metric_name: str
+        :return: all agents with their metric if they use metric_name as well
+        :rtype: dict
+        """
         agent_dict = {}
         if metric_name == 'content_trust.topic' or metric_name == 'content_trust.authority':
             agent_dict = {agent: metrics[metric_name] for agent, metrics in self.metrics_per_agent.items()
                           if metric_name in metrics.keys()}
         return agent_dict
 
-    @staticmethod
-    def check_consistency(name, agents, observations, scales_per_agent):
-        if len(name) == 0:
+    def check_consistency(self):
+        """
+        Checks the consistency of the initiated Scenario and raises Errors if something went wrong.
+
+        :rtype: None
+        :raises ValueError: any checked attribute has not a semantic reliable value.
+        :raises TypeError: any object (e.g. Observation, Scale) cannot be initialized properly.
+        :raises ModuleNotFoundError: Any scale's package was not found on local storage.
+        :raises SyntaxError: Any scale implementation is not subclass of Scale and UpdatableInterface.
+        """
+        if len(self.name) == 0:
             raise ValueError("Scenario names must be not empty.")
-        if len(agents) <= 1:
+        if len(self.agents) <= 1:
             raise ValueError("Scenario agents must describe at least 2 agents.")
-        if len(observations) == 0:
+        if len(self.observations) == 0:
             raise ValueError("Scenario schedule must be not empty.")
-        for observation in observations:
+        for observation in self.observations:
             if type(observation) != dict:
                 raise ValueError("Each Observation requires to be dict.")
             Observation(**observation)  # check if observation is instantiable, else TypeError will be raised.
-        # TODO: check for correct scales_per_agent setup
-        for scale_dict in scales_per_agent.values():
+        for scale_dict in self.scales_per_agent.values():
             init_scale_object(scale_dict)
+        # TODO: check for correct scales_per_agent setup in context of float and int numbers
         # TODO: check for correct metrics_per_agent setup
+        for metrics in self.metrics_per_agent.values():
+            if '__final__' not in metrics.keys() or 'name' not in metrics['__final__'].keys():
+                raise ValueError("Each agent requires a final trust metric under "
+                                 "metrics_per_agent[agent]['__final__']['name'].")
 
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
@@ -112,7 +155,6 @@ class Scenario(UpdatableInterface):
             # TODO history should be able to be None at default and then set to 0 for all agents
             #  -> maybe even not completely set and filled up with 0
             pass
-        self.check_consistency(name, agents, observations, scales_per_agent)
         self.name = name
         self.agents = agents
         self.observations = observations
@@ -120,6 +162,7 @@ class Scenario(UpdatableInterface):
         self.scales_per_agent = scales_per_agent
         self.metrics_per_agent = metrics_per_agent
         self.description = description
+        self.check_consistency()
         super().__init__(name=name, agents=agents, observations=observations, history=history,
                          scales_per_agent=scales_per_agent, metrics_per_agent=metrics_per_agent,
                          description=description)
@@ -136,6 +179,19 @@ class Scenario(UpdatableInterface):
 
 
 def init_scale_object(scale_dict):
+    """
+    Creates an scale object of the given scale attributes by dynamically importing the correct class.
+    scale_dict['package'] requires to be a .py file name in scale packages,
+    which Class name is the same without '_' in CamelCase.
+
+    :param scale_dict: scale object definition
+    :type scale_dict: dict
+    :return: the initiated scale object
+    :rtype: Scale or None
+    :raises ModuleNotFoundError: Scale's package was not found on local storage.
+    :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+    :raises TypeError: Scale object cannot get initialized correctly with scale_dict values.
+    """
     scales_path = Path(Path(__file__).parent.absolute()) / "scales"
     module_name = vars(sys.modules[__name__])['__package__']
     scale_object = None
@@ -161,9 +217,9 @@ def init_scale_object(scale_dict):
                 cls = getattr(scale_module, class_name)
                 if issubclass(cls, Scale) and issubclass(cls, UpdatableInterface):
                     scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
-                    scale_object = cls(**scale_kwargs)
+                    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
                 else:
-                    raise SyntaxError("Scale Implementation is not subclass of Scale and UpdatableInterface.")
+                    raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
     if scale_object is None:
         raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
     return scale_object
