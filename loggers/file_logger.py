@@ -101,6 +101,9 @@ class FileLogger(BasicLogger):
             with open(log_path.absolute(), "a+") as trust_log:
                 print(write_string,  file=trust_log)
 
+    def line_about_other_agent(self, line, other_agent):
+        return line.split(" ")[-2][1:-2] == other_agent
+
     def __init__(self, scenario_run_id, semaphore):
         super().__init__(scenario_run_id, semaphore)
         split_index = len(scenario_run_id.split("_")[0]) + 1  # index to cut constant of runId -> 'scenarioRun_'

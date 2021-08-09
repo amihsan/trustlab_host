@@ -15,8 +15,8 @@ class AgentServer(Thread):
             tcp_server.listen(4)
             (conn, (ip, port)) = tcp_server.accept()
             print(f"Connection established with: {ip}:{port}")
-            new_thread = ClientThread(conn, self.agent, self.agent_behavior, self.weights, self.trust_thresholds,
-                                      self.authorities, self.logger, self.observations_done, self.discovery)
+            new_thread = ClientThread(conn, self.agent, self.agent_behavior, self.scale, self.logger,
+                                      self.observations_done, self.discovery)
             new_thread.start()
             self.threads.append(new_thread)
         for thread in self.threads:
@@ -33,7 +33,7 @@ class AgentServer(Thread):
     def set_discovery(self, discovery):
         self.discovery = discovery
 
-    def __init__(self, agent, ip_address, port, agent_behavior, weights, trust_thresholds, authorities, logger,
+    def __init__(self, agent, ip_address, port, agent_behavior, scale, logger,
                  observations_done):
         Thread.__init__(self)
         self.agent = agent
@@ -42,9 +42,7 @@ class AgentServer(Thread):
         self.threads = []
         self.logger = logger
         self.agent_behavior = agent_behavior
-        self.weights = weights
-        self.trust_thresholds = trust_thresholds
-        self.authorities = authorities
+        self.scale = scale
         self.observations_done = observations_done
         self._stop_event = Event()
         self.discovery = {}

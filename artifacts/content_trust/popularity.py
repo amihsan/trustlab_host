@@ -1,0 +1,29 @@
+###############################################
+# Popularity check
+# The popularity is calculated by averaging the recommendation
+
+from artifacts.content_trust.direct_experience import direct_experience
+from artifacts.content_trust.recommendation import ask_for_recommendations
+from exec.ask_others import ask_other_agent
+
+
+def popularity(agent, other_agent, scale, discovery, logger):
+    remote_ip, remote_port = discovery[other_agent].split(":")
+    message = f"popularity"
+    received_value = ask_other_agent(remote_ip, int(remote_port), message)
+    # popularity value of other agent has to be weighted with direct experience to other_agent
+    popularity_value = direct_experience(agent, other_agent, scale, logger) * received_value
+    return popularity_value
+
+
+def popularity_response(agent, discovery, scale, logger):
+    # other_agent has to get all recommendations about itself
+    agents_to_ask = [third_agent for third_agent in discovery if
+                     direct_experience(agent, third_agent, scale, logger) >= scale.minimum_to_trust_others()]
+    recommendations = ask_for_recommendations(agent, agent, agents_to_ask, scale, discovery, logger)
+    # all recommendations are weighted with direct experience and averaged
+    default = scale.default_value()
+    popularity_value = sum(recommendations) / len(recommendations) if len(recommendations) > 0 else default
+    return popularity_value
+
+
