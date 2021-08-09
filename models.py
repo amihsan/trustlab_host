@@ -1,7 +1,28 @@
+import importlib
+import importlib.util
+import sys
 from serializer import Interface
+from abc import ABC, abstractmethod
+from os import listdir
+from os.path import isfile
+from pathlib import Path
 
 
-class Observation(Interface):
+class UpdatableInterface(Interface):
+    """
+    Makes Interface objects updatable by updating the self.kwargs at start of serialization.
+    """
+    def serialize(self):
+        for key in self.kwargs.keys():
+            value = getattr(self, key)
+            self.kwargs[key] = value if type(value) is not type else value.__name__
+        return super().serialize()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class Observation(UpdatableInterface):
     observation_id = int
     before = list
     sender = str
@@ -27,53 +48,124 @@ class Observation(Interface):
                and self.topic == other.topic and self.message == other.message
 
 
-class Scenario(Interface):
+class Scale(ABC):
+    @abstractmethod
+    def minimum_to_trust_others(self):
+        """
+        :return: is the minimum another party has to have to be declared as trusted or to be cooperated with
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def default_value(self):
+        """
+        :return: represents the default value for any new or unknown party
+        :rtype: float or int
+        """
+        pass
+
+    def __init__(self):
+        if hasattr(self, 'maximum') and hasattr(self, 'minimum'):
+            if type(self.maximum) is float and type(self.minimum) is float:
+                self.number_type = float
+            elif type(self.maximum) is int and type(self.minimum) is int:
+                self.number_type = int
+            else:
+                raise TypeError("Scale is defined with mixed minimum and maximum variable types. "
+                                "Requires to be int and int, or float and float.")
+        else:
+            raise AttributeError("Scale requires minimum and maximum variable.")
+
+
+class Scenario(UpdatableInterface):
     name = str
     agents = list
     observations = list
     description = str
     history = dict
-    trust_thresholds = dict
-    weights = dict
+    scales_per_agent = dict
     metrics_per_agent = dict
-    authorities = dict
-    topics = dict
 
-    @staticmethod
-    def check_consistency(name, agents, observations):
-        if len(name) == 0:
+    def agent_uses_metric(self, agent, metric_name):
+        """
+        :param agent: the agent's descriptor
+        :param metric_name: the metric's name
+        :type agent: str
+        :type metric_name: str
+        :return: whether metric name is used by agent
+        :rtype: bool
+        """
+        return metric_name in self.metrics_per_agent[agent].keys()
+
+    def any_agents_use_metric(self, metric_name):
+        """
+        :param metric_name: the metric's name
+        :type metric_name: str
+        :return: whether metric_name is used by any agent in the scenario
+        :rtype: bool
+        """
+        return any(metric_name in metrics.keys() for agent, metrics in self.metrics_per_agent.items())
+
+    def agents_with_metric(self, metric_name):
+        """
+        :param metric_name: the metric's name
+        :type metric_name: str
+        :return: all agents with their metric if they use metric_name as well
+        :rtype: dict
+        """
+        agent_dict = {}
+        if metric_name == 'content_trust.topic' or metric_name == 'content_trust.authority':
+            agent_dict = {agent: metrics[metric_name] for agent, metrics in self.metrics_per_agent.items()
+                          if metric_name in metrics.keys()}
+        return agent_dict
+
+    def check_consistency(self):
+        """
+        Checks the consistency of the initiated Scenario and raises Errors if something went wrong.
+
+        :rtype: None
+        :raises ValueError: any checked attribute has not a semantic reliable value.
+        :raises TypeError: any object (e.g. Observation, Scale) cannot be initialized properly.
+        :raises ModuleNotFoundError: Any scale's package was not found on local storage.
+        :raises SyntaxError: Any scale implementation is not subclass of Scale and UpdatableInterface.
+        """
+        if len(self.name) == 0:
             raise ValueError("Scenario names must be not empty.")
-        if len(agents) <= 1:
+        if len(self.agents) <= 1:
             raise ValueError("Scenario agents must describe at least 2 agents.")
-        if len(observations) == 0:
+        if len(self.observations) == 0:
             raise ValueError("Scenario schedule must be not empty.")
-        for observation in observations:
-            if type(observation) != dict or not "observation_id" in observation.keys() or not \
-                    "sender" in observation.keys() or not "receiver" in observation.keys() or not \
-                    "author" in observation.keys() or not "topic" in observation.keys() or not \
-                    "message" in observation.keys() or not "before" in observation.keys():
-                raise ValueError("Each Observation requires to be dict with all its attributes.")
+        for observation in self.observations:
+            if type(observation) != dict:
+                raise ValueError("Each Observation requires to be dict.")
+            Observation(**observation)  # check if observation is instantiable, else TypeError will be raised.
+        for scale_dict in self.scales_per_agent.values():
+            init_scale_object(scale_dict)
+        # TODO: check for correct scales_per_agent setup in context of float and int numbers
+        # TODO: check for correct metrics_per_agent setup
+        for metrics in self.metrics_per_agent.values():
+            if '__final__' not in metrics.keys() or 'name' not in metrics['__final__'].keys():
+                raise ValueError("Each agent requires a final trust metric under "
+                                 "metrics_per_agent[agent]['__final__']['name'].")
 
-    def __init__(self, name, agents, observations, history, trust_thresholds, weights,
-                 metrics_per_agent, authorities, topics, description="No one described this scenario so far."):
+    def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
+                 description="No one described this scenario so far."):
         if history is None or len(history.keys()) == 0:
             # TODO history should be able to be None at default and then set to 0 for all agents
             #  -> maybe even not completely set and filled up with 0
             pass
-        self.check_consistency(name, agents, observations)
         self.name = name
         self.agents = agents
         self.observations = observations
         self.history = history
-        self.trust_thresholds = trust_thresholds
-        self.weights = weights
+        self.scales_per_agent = scales_per_agent
         self.metrics_per_agent = metrics_per_agent
-        self.authorities = authorities
-        self.topics = topics
         self.description = description
+        self.check_consistency()
         super().__init__(name=name, agents=agents, observations=observations, history=history,
-                         trust_thresholds=trust_thresholds, weights=weights, metrics_per_agent=metrics_per_agent,
-                         authorities=authorities, topics=topics, description=description)
+                         scales_per_agent=scales_per_agent, metrics_per_agent=metrics_per_agent,
+                         description=description)
 
     def __str__(self):
         return self.name
@@ -86,4 +178,48 @@ class Scenario(Interface):
                self.description == other.description
 
 
+def init_scale_object(scale_dict):
+    """
+    Creates an scale object of the given scale attributes by dynamically importing the correct class.
+    scale_dict['package'] requires to be a .py file name in scale packages,
+    which Class name is the same without '_' in CamelCase.
 
+    :param scale_dict: scale object definition
+    :type scale_dict: dict
+    :return: the initiated scale object
+    :rtype: Scale or None
+    :raises ModuleNotFoundError: Scale's package was not found on local storage.
+    :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+    :raises TypeError: Scale object cannot get initialized correctly with scale_dict values.
+    """
+    scales_path = Path(Path(__file__).parent.absolute()) / "scales"
+    module_name = vars(sys.modules[__name__])['__package__']
+    scale_object = None
+    scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
+                        and file.endswith("_scale.py")]
+    for file_name in scale_file_names:
+        file_package = file_name.split(".")[0]
+        # python package path
+        import_package = f".scales.{file_package}"
+        # ensure package is accessible
+        implementation_spec = importlib.util.find_spec(import_package, module_name)
+        if file_package == scale_dict['package'] and implementation_spec is not None:
+            # check if module was imported during runtime to decide if reload is required
+            scale_spec = importlib.util.find_spec(import_package, module_name)
+            # import scenario config to variable
+            scale_module = importlib.import_module(import_package, module_name)
+            # only reload module after importing if spec was found before
+            if scale_spec is not None:
+                scale_module = importlib.reload(scale_module)
+            # class name requires to be file name in CamelCase
+            class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
+            if hasattr(scale_module, class_name):
+                cls = getattr(scale_module, class_name)
+                if issubclass(cls, Scale) and issubclass(cls, UpdatableInterface):
+                    scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
+                    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
+                else:
+                    raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
+    if scale_object is None:
+        raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
+    return scale_object
