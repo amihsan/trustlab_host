@@ -4,11 +4,30 @@ from artifacts.content_trust.popularity import popularity as content_trust_popul
 from artifacts.content_trust.authority import authority as content_trust_authority
 from artifacts.content_trust.topic import topic as content_trust_topic
 from artifacts.final_trust import weighted_avg_final_trust
+from models import Scale
+from loggers.basic_logger import BasicLogger
 
 
 def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger, discovery):
     """
-    calculate trust metrics
+    Calculate trust metrics and then finalize all values to one final trust value.
+
+    :param agent: The agent which calculates the trust. (start of relationship)
+    :type agent: str
+    :param other_agent: The other agent for which the trust relationship is calculated. (end of relationship)
+    :type other_agent: str
+    :param current_topic: The topic of the message received and on which the trust is calculated.
+    :type current_topic: str
+    :param agent_behavior: Metrics to be used the agent.
+    :type agent_behavior: dict
+    :param scale: The Scale object to be used by the agent.
+    :type scale: Scale
+    :param logger: The logger object to be used by the agent.
+    :type logger: BasicLogger
+    :param discovery: Addresses of all agents within the scenario.
+    :type discovery: dict
+    :return: The final trust value for one specific interaction between agent and the other agent.
+    :rtype: float or int
     """
     trust_values = {}
     if 'content_trust.direct_experience' in agent_behavior.keys():
