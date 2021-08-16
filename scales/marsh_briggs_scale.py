@@ -10,7 +10,7 @@ class MarshBriggsScale(Scale, UpdatableInterface):
     forgivability = float
 
     def minimum_to_trust_others(self):
-        return self.minimum
+        return self.cooperation
 
     def default_value(self):
         return self.default

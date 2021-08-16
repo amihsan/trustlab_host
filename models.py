@@ -149,6 +149,45 @@ class Scenario(UpdatableInterface):
                 raise ValueError("Each agent requires a final trust metric under "
                                  "metrics_per_agent[agent]['__final__']['name'].")
 
+    @staticmethod
+    def correct_number_types(obj_desc):
+        """
+        Corrects number types in object description of Scenario by using `load_scale_spec(scale_dict)`
+        and formatting scale, history and metric descriptions.
+
+        :param obj_desc: object description of Scenario
+        :type obj_desc: dict
+        :return: object description of Scenario with correct number formats
+        :rtype: dict
+        :raises ModuleNotFoundError: Scale's package was not found on local storage.
+        :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+        """
+        for agent in obj_desc['agents']:
+            scale_dict = obj_desc['scales_per_agent'][agent]
+            cls = load_scale_spec(scale_dict)
+            number_type = cls.maximum
+            for variable, value in obj_desc['scales_per_agent'][agent].items():
+                if type(value) is int or type(value) is float:
+                    if number_type is float:
+                        obj_desc['scales_per_agent'][agent][variable] = float(value)
+                    elif number_type is int:
+                        obj_desc['scales_per_agent'][agent][variable] = int(value)
+            for variable, value in obj_desc['history'][agent].items():
+                if type(value) is int or type(value) is float:
+                    if number_type is float:
+                        obj_desc['history'][agent][variable] = float(value)
+                    elif number_type is int:
+                        obj_desc['history'][agent][variable] = int(value)
+            if 'content_trust.topic' in obj_desc['metrics_per_agent'][agent]:
+                for other_agent, topic_dict in obj_desc['metrics_per_agent'][agent]['content_trust.topic'].items():
+                    for topic, value in topic_dict.items():
+                        if number_type is float:
+                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = \
+                                float(value)
+                        elif number_type is int:
+                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = int(value)
+        return obj_desc
+
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
         if history is None or len(history.keys()) == 0:
@@ -178,23 +217,21 @@ class Scenario(UpdatableInterface):
                self.description == other.description
 
 
-def init_scale_object(scale_dict):
+def load_scale_spec(scale_dict):
     """
-    Creates an scale object of the given scale attributes by dynamically importing the correct class.
+    Loads a scale object spec of the given scale attributes by dynamically importing the correct class.
     scale_dict['package'] requires to be a .py file name in scale packages,
     which Class name is the same without '_' in CamelCase.
 
     :param scale_dict: scale object definition
     :type scale_dict: dict
-    :return: the initiated scale object
-    :rtype: Scale or None
+    :return: the scale object spec
     :raises ModuleNotFoundError: Scale's package was not found on local storage.
     :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
-    :raises TypeError: Scale object cannot get initialized correctly with scale_dict values.
     """
     scales_path = Path(Path(__file__).parent.absolute()) / "scales"
     module_name = vars(sys.modules[__name__])['__package__']
-    scale_object = None
+    cls = None
     scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
                         and file.endswith("_scale.py")]
     for file_name in scale_file_names:
@@ -215,11 +252,26 @@ def init_scale_object(scale_dict):
             class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
             if hasattr(scale_module, class_name):
                 cls = getattr(scale_module, class_name)
-                if issubclass(cls, Scale) and issubclass(cls, UpdatableInterface):
-                    scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
-                    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
-                else:
+                if not issubclass(cls, Scale) or not issubclass(cls, UpdatableInterface):
                     raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
-    if scale_object is None:
+    if cls is None:
         raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
+    return cls
+
+
+def init_scale_object(scale_dict):
+    """
+    Creates a scale object of the given scale attributes by using `load_scale_spec(scale_dict)`.
+
+    :param scale_dict: scale object definition
+    :type scale_dict: dict
+    :return: the initiated scale object
+    :rtype: Scale or None
+    :raises ModuleNotFoundError: Scale's package was not found on local storage.
+    :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+    :raises TypeError: Scale object cannot get initialized correctly with scale_dict values.
+    """
+    cls = load_scale_spec(scale_dict)
+    scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
+    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
     return scale_object
