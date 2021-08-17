@@ -53,7 +53,7 @@ class Scale(ABC):
     @abstractmethod
     def minimum_to_trust_others(self):
         """
-        :return: is the minimum another party has to have to be declared as trusted or to be cooperated with
+        :return: trust minimum another party has to have to be declared as trusted or to be cooperated with
         :rtype: float or int
         """
         pass
@@ -62,6 +62,22 @@ class Scale(ABC):
     def default_value(self):
         """
         :return: represents the default value for any new or unknown party
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def maximum_value(self):
+        """
+        :return: represents the maximum value within this scale
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def minimum_value(self):
+        """
+        :return: represents the minimum value within this scale
         :rtype: float or int
         """
         pass
@@ -80,6 +96,9 @@ class Scale(ABC):
 
 
 class Scenario(UpdatableInterface):
+    """
+    The Scenario class for the usage of the scenarios with its DSL files.
+    """
     name = str
     agents = list
     observations = list

@@ -43,14 +43,14 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger,
         logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
         trust_values['content_trust.popularity'] = popularity_value
     if 'content_trust.recommendation' in agent_behavior:
-        recommendation_value = content_trust_recommendation(agent, other_agent, discovery, scale, logger)
+        recommendation_value = content_trust_recommendation(agent, other_agent, scale, logger, discovery)
         logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
         trust_values['content_trust.recommendation'] = recommendation_value
     if 'content_trust.topic' in agent_behavior:
         topic_value = content_trust_topic(agent, other_agent, current_topic, scale, logger)
         logger.write_to_agent_trust_log(agent, "topic", other_agent, topic_value)
         trust_values['content_trust.topic'] = topic_value
-    # # old code from internship (do not use without refactoring
+    # # old code from internship (do not use without refactoring)
     # if 'age' in agent_behavior:
     #     credibility_value = str(format(
     #         float(weights["age"]) * age_check(current_agent, other_agent, current_message[24:26]), '.2f'))
@@ -99,7 +99,7 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger,
     """
     # delete all metrics from final trust calculation, which results are set to None
     trust_values = {metric: value for metric, value in trust_values.items() if value is not None}
-    final_trust_value = 0.0  # TODO: set to middle of given trust scale
+    final_trust_value = scale.default_value()
     if agent_behavior['__final__']:
         if agent_behavior['__final__']['name'] == 'weighted_average':
             final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'])

@@ -1,19 +1,16 @@
 import json
 from threading import Thread
-
 from trust_evaluation import eval_trust
 from models import Observation, init_scale_object
 from artifacts.content_trust.recommendation import recommendation_response
 from artifacts.content_trust.popularity import popularity_response
-
-
-untrustedAgents = []
+from config import BUFFER_SIZE
 
 
 class ClientThread(Thread):
     def run(self):
         try:
-            message = self.conn.recv(2048)
+            message = self.conn.recv(BUFFER_SIZE)
             if message != '':
                 decoded_msg = message.decode('utf-8')
                 if decoded_msg == "END":
@@ -26,7 +23,8 @@ class ClientThread(Thread):
                         trust_value = recommendation_response(self.agent, trust_protocol_message.split("_")[1],
                                                               self.scale, self.logger)
                     elif trust_operation == "popularity":
-                        trust_value = popularity_response(self.agent, self.discovery, self.scale, self.logger)
+                        trust_value = popularity_response(self.agent, trust_protocol_message.split("_")[1],
+                                                          self.scale, self.logger, self.discovery)
                     trust_response = f"{trust_protocol_head}::{trust_protocol_message}::{trust_value}"
                     self.conn.send(bytes(trust_response, 'UTF-8'))
                 else:
@@ -39,7 +37,7 @@ class ClientThread(Thread):
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic,
                                                            trust_value)
                     self.logger.write_to_trust_log(self.agent, observation.sender, trust_value)
-                    # TODO how to work with trust decisions in general?
+                    # TODO: how to work with trust decisions in general?
                     # if float(trust_value) < self.scenario.trust_thresholds['lower_limit']:
                     #     untrustedAgents.append(other_agent)
                     #     print("+++" + current_agent + ", nodes beyond redemption: " + other_agent + "+++")

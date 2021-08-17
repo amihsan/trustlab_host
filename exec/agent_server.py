@@ -6,12 +6,11 @@ from .client_thread import ClientThread
 
 class AgentServer(Thread):
     def run(self):
-        buffer_size = 2048
         tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_server.bind((self.ip_address, self.port))
         print(f"Agent '{self.agent}' listens on {self.ip_address}:{self.port}")
-        while not self._stop_event.isSet():
+        while not self._stop_event.is_set():
             tcp_server.listen(4)
             (conn, (ip, port)) = tcp_server.accept()
             print(f"Connection established with: {ip}:{port}")
