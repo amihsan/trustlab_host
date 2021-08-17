@@ -7,7 +7,7 @@ from artifacts.content_trust.recommendation import ask_for_recommendations
 from exec.ask_others import ask_other_agent
 
 
-def popularity(agent, other_agent, scale, discovery, logger):
+def popularity(agent, other_agent, discovery, scale, logger):
     remote_ip, remote_port = discovery[other_agent].split(":")
     message = f"popularity"
     received_value = ask_other_agent(remote_ip, int(remote_port), message)

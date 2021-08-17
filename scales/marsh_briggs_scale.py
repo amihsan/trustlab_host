@@ -1,4 +1,7 @@
-from ..models import Scale, UpdatableInterface
+if len(__name__.split('.')) > 2:
+    from ..models import Scale, UpdatableInterface
+else:
+    from models import Scale, UpdatableInterface
 
 
 class MarshBriggsScale(Scale, UpdatableInterface):

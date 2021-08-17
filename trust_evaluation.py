@@ -35,7 +35,7 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger,
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
         trust_values['content_trust.direct_experience'] = direct_experience_value
     if 'content_trust.authority' in agent_behavior and other_agent in agent_behavior['content_trust.authority']:
-        authority_value = format(content_trust_authority(scale), '.2f')
+        authority_value = content_trust_authority(scale)
         logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
         trust_values['content_trust.authority'] = authority_value
     if 'content_trust.popularity' in agent_behavior:

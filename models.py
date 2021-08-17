@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import imp
 import sys
 from serializer import Interface
 from abc import ABC, abstractmethod
@@ -236,15 +237,18 @@ def load_scale_spec(scale_dict):
                         and file.endswith("_scale.py")]
     for file_name in scale_file_names:
         file_package = file_name.split(".")[0]
-        # python package path
-        import_package = f".scales.{file_package}"
+        # python module path
+        if module_name != '':
+            import_module = f".scales.{file_package}"
+        else:
+            import_module = f"scales.{file_package}"
         # ensure package is accessible
-        implementation_spec = importlib.util.find_spec(import_package, module_name)
+        implementation_spec = importlib.util.find_spec(import_module, module_name)
         if file_package == scale_dict['package'] and implementation_spec is not None:
             # check if module was imported during runtime to decide if reload is required
-            scale_spec = importlib.util.find_spec(import_package, module_name)
-            # import scenario config to variable
-            scale_module = importlib.import_module(import_package, module_name)
+            scale_spec = importlib.util.find_spec(import_module, module_name)
+            # import scale config to variable
+            scale_module = importlib.import_module(import_module, module_name)
             # only reload module after importing if spec was found before
             if scale_spec is not None:
                 scale_module = importlib.reload(scale_module)
