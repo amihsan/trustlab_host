@@ -170,6 +170,33 @@ class Scenario(UpdatableInterface):
                                  "metrics_per_agent[agent]['__final__']['name'].")
 
     @staticmethod
+    def change_number_type_of_value(value, target_type):
+        if type(value) is float or type(value) is int:
+            if target_type is float:
+                return float(value)
+            elif target_type is int:
+                return int(value)
+        return value
+
+    @staticmethod
+    def change_number_type_in_dictionary(dictionary, target_type):
+        for key, value in dictionary.items():
+            dictionary[key] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
+    def change_number_type_in_listing(listing, target_type):
+        for count, value in enumerate(listing):
+            listing[count] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
     def correct_number_types(obj_desc):
         """
         Corrects number types in object description of Scenario by using `load_scale_spec(scale_dict)`
@@ -186,27 +213,9 @@ class Scenario(UpdatableInterface):
             scale_dict = obj_desc['scales_per_agent'][agent]
             cls = load_scale_spec(scale_dict)
             number_type = cls.maximum
-            for variable, value in obj_desc['scales_per_agent'][agent].items():
-                if type(value) is int or type(value) is float:
-                    if number_type is float:
-                        obj_desc['scales_per_agent'][agent][variable] = float(value)
-                    elif number_type is int:
-                        obj_desc['scales_per_agent'][agent][variable] = int(value)
-            for variable, value in obj_desc['history'][agent].items():
-                if type(value) is int or type(value) is float:
-                    if number_type is float:
-                        obj_desc['history'][agent][variable] = float(value)
-                    elif number_type is int:
-                        obj_desc['history'][agent][variable] = int(value)
-            if 'content_trust.topic' in obj_desc['metrics_per_agent'][agent]:
-                for other_agent, topic_dict in obj_desc['metrics_per_agent'][agent]['content_trust.topic'].items():
-                    for topic, value in topic_dict.items():
-                        if number_type is float:
-                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = \
-                                float(value)
-                        elif number_type is int:
-                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = int(value)
-        return obj_desc
+            Scenario.change_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['history'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
 
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
