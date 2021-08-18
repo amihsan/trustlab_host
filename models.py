@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import imp
 import sys
 from serializer import Interface
 from abc import ABC, abstractmethod
@@ -52,7 +53,7 @@ class Scale(ABC):
     @abstractmethod
     def minimum_to_trust_others(self):
         """
-        :return: is the minimum another party has to have to be declared as trusted or to be cooperated with
+        :return: trust minimum another party has to have to be declared as trusted or to be cooperated with
         :rtype: float or int
         """
         pass
@@ -61,6 +62,22 @@ class Scale(ABC):
     def default_value(self):
         """
         :return: represents the default value for any new or unknown party
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def maximum_value(self):
+        """
+        :return: represents the maximum value within this scale
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def minimum_value(self):
+        """
+        :return: represents the minimum value within this scale
         :rtype: float or int
         """
         pass
@@ -79,6 +96,9 @@ class Scale(ABC):
 
 
 class Scenario(UpdatableInterface):
+    """
+    The Scenario class for the usage of the scenarios with its DSL files.
+    """
     name = str
     agents = list
     observations = list
@@ -149,6 +169,54 @@ class Scenario(UpdatableInterface):
                 raise ValueError("Each agent requires a final trust metric under "
                                  "metrics_per_agent[agent]['__final__']['name'].")
 
+    @staticmethod
+    def change_number_type_of_value(value, target_type):
+        if type(value) is float or type(value) is int:
+            if target_type is float:
+                return float(value)
+            elif target_type is int:
+                return int(value)
+        return value
+
+    @staticmethod
+    def change_number_type_in_dictionary(dictionary, target_type):
+        for key, value in dictionary.items():
+            dictionary[key] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
+    def change_number_type_in_listing(listing, target_type):
+        for count, value in enumerate(listing):
+            listing[count] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
+    def correct_number_types(obj_desc):
+        """
+        Corrects number types in object description of Scenario by using `load_scale_spec(scale_dict)`
+        and formatting scale, history and metric descriptions.
+
+        :param obj_desc: object description of Scenario
+        :type obj_desc: dict
+        :return: object description of Scenario with correct number formats
+        :rtype: dict
+        :raises ModuleNotFoundError: Scale's package was not found on local storage.
+        :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+        """
+        for agent in obj_desc['agents']:
+            scale_dict = obj_desc['scales_per_agent'][agent]
+            cls = load_scale_spec(scale_dict)
+            number_type = cls.maximum
+            Scenario.change_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['history'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
+
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
         if history is None or len(history.keys()) == 0:
@@ -178,11 +246,54 @@ class Scenario(UpdatableInterface):
                self.description == other.description
 
 
-def init_scale_object(scale_dict):
+def load_scale_spec(scale_dict):
     """
-    Creates an scale object of the given scale attributes by dynamically importing the correct class.
+    Loads a scale object spec of the given scale attributes by dynamically importing the correct class.
     scale_dict['package'] requires to be a .py file name in scale packages,
     which Class name is the same without '_' in CamelCase.
+
+    :param scale_dict: scale object definition
+    :type scale_dict: dict
+    :return: the scale object spec
+    :raises ModuleNotFoundError: Scale's package was not found on local storage.
+    :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
+    """
+    scales_path = Path(Path(__file__).parent.absolute()) / "scales"
+    module_name = vars(sys.modules[__name__])['__package__']
+    cls = None
+    scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
+                        and file.endswith("_scale.py")]
+    for file_name in scale_file_names:
+        file_package = file_name.split(".")[0]
+        # python module path
+        if module_name != '':
+            import_module = f".scales.{file_package}"
+        else:
+            import_module = f"scales.{file_package}"
+        # ensure package is accessible
+        implementation_spec = importlib.util.find_spec(import_module, module_name)
+        if file_package == scale_dict['package'] and implementation_spec is not None:
+            # check if module was imported during runtime to decide if reload is required
+            scale_spec = importlib.util.find_spec(import_module, module_name)
+            # import scale config to variable
+            scale_module = importlib.import_module(import_module, module_name)
+            # only reload module after importing if spec was found before
+            if scale_spec is not None:
+                scale_module = importlib.reload(scale_module)
+            # class name requires to be file name in CamelCase
+            class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
+            if hasattr(scale_module, class_name):
+                cls = getattr(scale_module, class_name)
+                if not issubclass(cls, Scale) or not issubclass(cls, UpdatableInterface):
+                    raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
+    if cls is None:
+        raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
+    return cls
+
+
+def init_scale_object(scale_dict):
+    """
+    Creates a scale object of the given scale attributes by using `load_scale_spec(scale_dict)`.
 
     :param scale_dict: scale object definition
     :type scale_dict: dict
@@ -192,34 +303,7 @@ def init_scale_object(scale_dict):
     :raises SyntaxError: Scale implementation is not subclass of Scale and UpdatableInterface.
     :raises TypeError: Scale object cannot get initialized correctly with scale_dict values.
     """
-    scales_path = Path(Path(__file__).parent.absolute()) / "scales"
-    module_name = vars(sys.modules[__name__])['__package__']
-    scale_object = None
-    scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
-                        and file.endswith("_scale.py")]
-    for file_name in scale_file_names:
-        file_package = file_name.split(".")[0]
-        # python package path
-        import_package = f".scales.{file_package}"
-        # ensure package is accessible
-        implementation_spec = importlib.util.find_spec(import_package, module_name)
-        if file_package == scale_dict['package'] and implementation_spec is not None:
-            # check if module was imported during runtime to decide if reload is required
-            scale_spec = importlib.util.find_spec(import_package, module_name)
-            # import scenario config to variable
-            scale_module = importlib.import_module(import_package, module_name)
-            # only reload module after importing if spec was found before
-            if scale_spec is not None:
-                scale_module = importlib.reload(scale_module)
-            # class name requires to be file name in CamelCase
-            class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
-            if hasattr(scale_module, class_name):
-                cls = getattr(scale_module, class_name)
-                if issubclass(cls, Scale) and issubclass(cls, UpdatableInterface):
-                    scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
-                    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
-                else:
-                    raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
-    if scale_object is None:
-        raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
+    cls = load_scale_spec(scale_dict)
+    scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
+    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
     return scale_object
