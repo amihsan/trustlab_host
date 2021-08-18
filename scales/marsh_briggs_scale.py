@@ -1,4 +1,7 @@
-from ..models import Scale, UpdatableInterface
+if len(__name__.split('.')) > 2:
+    from ..models import Scale, UpdatableInterface
+else:
+    from models import Scale, UpdatableInterface
 
 
 class MarshBriggsScale(Scale, UpdatableInterface):
@@ -14,6 +17,12 @@ class MarshBriggsScale(Scale, UpdatableInterface):
 
     def default_value(self):
         return self.default
+
+    def maximum_value(self):
+        return self.maximum
+
+    def minimum_value(self):
+        return self.minimum
 
     def __init__(self, minimum, maximum, default=0.0, cooperation=0.5, forgivability=-0.5,
                  name="Trust Scale by Marsh and Briggs (2009)"):

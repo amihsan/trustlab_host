@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import imp
 import sys
 from serializer import Interface
 from abc import ABC, abstractmethod
@@ -52,7 +53,7 @@ class Scale(ABC):
     @abstractmethod
     def minimum_to_trust_others(self):
         """
-        :return: is the minimum another party has to have to be declared as trusted or to be cooperated with
+        :return: trust minimum another party has to have to be declared as trusted or to be cooperated with
         :rtype: float or int
         """
         pass
@@ -61,6 +62,22 @@ class Scale(ABC):
     def default_value(self):
         """
         :return: represents the default value for any new or unknown party
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def maximum_value(self):
+        """
+        :return: represents the maximum value within this scale
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def minimum_value(self):
+        """
+        :return: represents the minimum value within this scale
         :rtype: float or int
         """
         pass
@@ -79,6 +96,9 @@ class Scale(ABC):
 
 
 class Scenario(UpdatableInterface):
+    """
+    The Scenario class for the usage of the scenarios with its DSL files.
+    """
     name = str
     agents = list
     observations = list
@@ -150,6 +170,33 @@ class Scenario(UpdatableInterface):
                                  "metrics_per_agent[agent]['__final__']['name'].")
 
     @staticmethod
+    def change_number_type_of_value(value, target_type):
+        if type(value) is float or type(value) is int:
+            if target_type is float:
+                return float(value)
+            elif target_type is int:
+                return int(value)
+        return value
+
+    @staticmethod
+    def change_number_type_in_dictionary(dictionary, target_type):
+        for key, value in dictionary.items():
+            dictionary[key] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
+    def change_number_type_in_listing(listing, target_type):
+        for count, value in enumerate(listing):
+            listing[count] = Scenario.change_number_type_of_value(value, target_type)
+            if type(value) is dict:
+                Scenario.change_number_type_in_dictionary(value, target_type)
+            if type(value) is list:
+                Scenario.change_number_type_in_listing(value, target_type)
+
+    @staticmethod
     def correct_number_types(obj_desc):
         """
         Corrects number types in object description of Scenario by using `load_scale_spec(scale_dict)`
@@ -166,27 +213,9 @@ class Scenario(UpdatableInterface):
             scale_dict = obj_desc['scales_per_agent'][agent]
             cls = load_scale_spec(scale_dict)
             number_type = cls.maximum
-            for variable, value in obj_desc['scales_per_agent'][agent].items():
-                if type(value) is int or type(value) is float:
-                    if number_type is float:
-                        obj_desc['scales_per_agent'][agent][variable] = float(value)
-                    elif number_type is int:
-                        obj_desc['scales_per_agent'][agent][variable] = int(value)
-            for variable, value in obj_desc['history'][agent].items():
-                if type(value) is int or type(value) is float:
-                    if number_type is float:
-                        obj_desc['history'][agent][variable] = float(value)
-                    elif number_type is int:
-                        obj_desc['history'][agent][variable] = int(value)
-            if 'content_trust.topic' in obj_desc['metrics_per_agent'][agent]:
-                for other_agent, topic_dict in obj_desc['metrics_per_agent'][agent]['content_trust.topic'].items():
-                    for topic, value in topic_dict.items():
-                        if number_type is float:
-                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = \
-                                float(value)
-                        elif number_type is int:
-                            obj_desc['metrics_per_agent'][agent]['content_trust.topic'][other_agent][topic] = int(value)
-        return obj_desc
+            Scenario.change_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['history'][agent], number_type)
+            Scenario.change_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
 
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
@@ -236,15 +265,18 @@ def load_scale_spec(scale_dict):
                         and file.endswith("_scale.py")]
     for file_name in scale_file_names:
         file_package = file_name.split(".")[0]
-        # python package path
-        import_package = f".scales.{file_package}"
+        # python module path
+        if module_name != '':
+            import_module = f".scales.{file_package}"
+        else:
+            import_module = f"scales.{file_package}"
         # ensure package is accessible
-        implementation_spec = importlib.util.find_spec(import_package, module_name)
+        implementation_spec = importlib.util.find_spec(import_module, module_name)
         if file_package == scale_dict['package'] and implementation_spec is not None:
             # check if module was imported during runtime to decide if reload is required
-            scale_spec = importlib.util.find_spec(import_package, module_name)
-            # import scenario config to variable
-            scale_module = importlib.import_module(import_package, module_name)
+            scale_spec = importlib.util.find_spec(import_module, module_name)
+            # import scale config to variable
+            scale_module = importlib.import_module(import_module, module_name)
             # only reload module after importing if spec was found before
             if scale_spec is not None:
                 scale_module = importlib.reload(scale_module)
