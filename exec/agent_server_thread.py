@@ -7,7 +7,7 @@ from artifacts.content_trust.popularity import popularity_response
 from config import BUFFER_SIZE
 
 
-class ClientThread(Thread):
+class ServerThread(Thread):
     def run(self):
         try:
             message = self.conn.recv(BUFFER_SIZE)

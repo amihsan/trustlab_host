@@ -15,7 +15,7 @@ def direct_experience(agent, other_agent, scale, logger):
     :return: Direct experience value from agent about other agent.
     :rtype: float or int
     """
-    history_lines = logger.readlines_from_agent_history(agent)
+    history_lines = logger.read_lines_from_agent_history(agent)
     # getting all history values of the agent respective to the other agent
     history = [float(entry.split(" ")[-1]) for entry in history_lines if
                logger.line_about_other_agent(entry, other_agent)]

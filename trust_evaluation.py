@@ -30,7 +30,7 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger,
     :rtype: float or int
     """
     trust_values = {}
-    if 'content_trust.direct_experience' in agent_behavior.keys():
+    if 'content_trust.direct_experience' in agent_behavior:
         direct_experience_value = content_trust_direct_experience(agent, other_agent, scale, logger)
         logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
         trust_values['content_trust.direct_experience'] = direct_experience_value

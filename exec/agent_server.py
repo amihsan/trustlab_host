@@ -1,7 +1,7 @@
 import socket
 from threading import Thread, Event
 
-from .client_thread import ClientThread
+from .agent_server_thread import ServerThread
 
 
 class AgentServer(Thread):
@@ -14,7 +14,7 @@ class AgentServer(Thread):
             tcp_server.listen(4)
             (conn, (ip, port)) = tcp_server.accept()
             print(f"Connection established with: {ip}:{port}")
-            new_thread = ClientThread(conn, self.agent, self.agent_behavior, self.scale, self.logger,
+            new_thread = ServerThread(conn, self.agent, self.agent_behavior, self.scale, self.logger,
                                       self.observations_done, self.discovery)
             new_thread.start()
             self.threads.append(new_thread)

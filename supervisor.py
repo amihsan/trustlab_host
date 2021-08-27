@@ -18,7 +18,7 @@ class Supervisor:
         """
         Represents the run method of a supervisor who receives messages from the director and sends scenario dependent
         other messages to the director. It uses a connector class to handle the actual connection to the director and
-        a ScenarioRun objects to represent each scenario run by one thread.
+        a ScenarioRun objects to represent each scenario run by one subprocess.
 
         :rtype: None
         """
