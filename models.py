@@ -1,6 +1,5 @@
 import importlib
 import importlib.util
-import imp
 import sys
 from serializer import Interface
 from abc import ABC, abstractmethod
@@ -24,6 +23,9 @@ class UpdatableInterface(Interface):
 
 
 class Observation(UpdatableInterface):
+    """
+    Representing one observation within a scenario.
+    """
     observation_id = int
     before = list
     sender = str
@@ -33,6 +35,15 @@ class Observation(UpdatableInterface):
     message = str
 
     def __init__(self, observation_id, before, sender, receiver, author, topic, message):
+        """
+        :type observation_id: int
+        :type before: list
+        :type sender: str
+        :type receiver: str
+        :type author: str
+        :type topic: str
+        :type message: str
+        """
         self.observation_id = observation_id
         self.before = before
         self.sender = sender
@@ -50,6 +61,9 @@ class Observation(UpdatableInterface):
 
 
 class Scale(ABC):
+    """
+    Base class for all trust scales in aTLAS.
+    """
     @abstractmethod
     def minimum_to_trust_others(self):
         """
@@ -170,7 +184,18 @@ class Scenario(UpdatableInterface):
                                  "metrics_per_agent[agent]['__final__']['name'].")
 
     @staticmethod
-    def change_number_type_of_value(value, target_type):
+    def format_number_type_of_value(value, target_type):
+        """
+        Formats the given value to target type if value is of type int or float
+        and target type is float or int respectively.
+
+        :param value: The value to potentially change its number type.
+        :type value: Any
+        :param target_type: The numbers target type.
+        :type target_type: type
+        :return: The value in correct number type or original type if not float or int.
+        :rtype: Any
+        """
         if type(value) is float or type(value) is int:
             if target_type is float:
                 return float(value)
@@ -179,28 +204,44 @@ class Scenario(UpdatableInterface):
         return value
 
     @staticmethod
-    def change_number_type_in_dictionary(dictionary, target_type):
+    def format_number_type_in_dictionary(dictionary, target_type):
+        """
+        Formats the numbers in the given dictionary by iterating over it to given target type.
+
+        :param dictionary: The dictionary to iterate over.
+        :type dictionary: dict
+        :param target_type: The numbers target type.
+        :type target_type: type
+        """
         for key, value in dictionary.items():
-            dictionary[key] = Scenario.change_number_type_of_value(value, target_type)
+            dictionary[key] = Scenario.format_number_type_of_value(value, target_type)
             if type(value) is dict:
-                Scenario.change_number_type_in_dictionary(value, target_type)
+                Scenario.format_number_type_in_dictionary(value, target_type)
             if type(value) is list:
-                Scenario.change_number_type_in_listing(value, target_type)
+                Scenario.format_number_type_in_listing(value, target_type)
 
     @staticmethod
-    def change_number_type_in_listing(listing, target_type):
+    def format_number_type_in_listing(listing, target_type):
+        """
+        Formats the numbers in the given list by iterating over it to given target type.
+
+        :param listing: The list to iterate over.
+        :type listing: list
+        :param target_type: The numbers target type.
+        :type target_type: type
+        """
         for count, value in enumerate(listing):
-            listing[count] = Scenario.change_number_type_of_value(value, target_type)
+            listing[count] = Scenario.format_number_type_of_value(value, target_type)
             if type(value) is dict:
-                Scenario.change_number_type_in_dictionary(value, target_type)
+                Scenario.format_number_type_in_dictionary(value, target_type)
             if type(value) is list:
-                Scenario.change_number_type_in_listing(value, target_type)
+                Scenario.format_number_type_in_listing(value, target_type)
 
     @staticmethod
     def correct_number_types(obj_desc):
         """
-        Corrects number types in object description of Scenario by using `load_scale_spec(scale_dict)`
-        and formatting scale, history and metric descriptions.
+        Corrects number types in object description of Scenario by using `load_scale_spec`
+        and `change_number_type_in_dictionary` to format scale, history and metric descriptions.
 
         :param obj_desc: object description of Scenario
         :type obj_desc: dict
@@ -213,12 +254,21 @@ class Scenario(UpdatableInterface):
             scale_dict = obj_desc['scales_per_agent'][agent]
             cls = load_scale_spec(scale_dict)
             number_type = cls.maximum
-            Scenario.change_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
-            Scenario.change_number_type_in_dictionary(obj_desc['history'][agent], number_type)
-            Scenario.change_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
+            Scenario.format_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
+            Scenario.format_number_type_in_dictionary(obj_desc['history'][agent], number_type)
+            Scenario.format_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
 
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
+        """
+        :type name: str
+        :type agents: list
+        :type observations: list
+        :type history: dict
+        :type scales_per_agent: dict
+        :type metrics_per_agent: dict
+        :type description: str
+        """
         if history is None or len(history.keys()) == 0:
             # TODO history should be able to be None at default and then set to 0 for all agents
             #  -> maybe even not completely set and filled up with 0

@@ -5,6 +5,9 @@ from config import LOG_PATH
 
 
 class FileLogger(BasicLogger):
+    """
+    Provides the class to log data lines from and to text files by inheriting from `BasicLogger`.
+    """
     if not LOG_PATH.exists():
         os.mkdir(LOG_PATH)
 
@@ -14,7 +17,7 @@ class FileLogger(BasicLogger):
         lines = lines[len_filter:]
         return lines
 
-    def readlines_from_agent_history(self, agent, len_filter=None):
+    def read_lines_from_agent_history(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_history.txt"
         with open(log_path.absolute(), "r+") as history_file:
             history_lines = history_file.readlines()
@@ -22,7 +25,7 @@ class FileLogger(BasicLogger):
                 history_lines = self.apply_len_filter(history_lines, len_filter)
         return history_lines
 
-    def readlines_from_agent_trust_log(self, agent, len_filter=None):
+    def read_lines_from_agent_trust_log(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_trust_log.txt"
         with open(log_path.absolute(), "r+") as trust_log_file:
             trust_log_lines = trust_log_file.readlines()
@@ -30,7 +33,7 @@ class FileLogger(BasicLogger):
                 trust_log_lines = self.apply_len_filter(trust_log_lines, len_filter)
         return trust_log_lines
 
-    def readlines_from_agent_topic_trust(self, agent, len_filter=None):
+    def read_lines_from_agent_topic_trust(self, agent, len_filter=None):
         log_path = self.log_path / f"{agent}_topic.txt"
         with open(log_path.absolute(), "r+") as topic_file:
             topic_lines = topic_file.readlines()
@@ -38,7 +41,7 @@ class FileLogger(BasicLogger):
                 topic_lines = self.apply_len_filter(topic_lines, len_filter)
         return topic_lines
 
-    def readlines_from_trust_log(self, len_filter=None):
+    def read_lines_from_trust_log(self, len_filter=None):
         log_path = self.log_path / f"trust_log.txt"
         with open(log_path.absolute(), "r+") as log_file:
             log_lines = log_file.readlines()
