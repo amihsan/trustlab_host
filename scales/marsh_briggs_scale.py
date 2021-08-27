@@ -5,6 +5,11 @@ else:
 
 
 class MarshBriggsScale(Scale, UpdatableInterface):
+    """
+    Implements the trust scale from Marsh and Briggs (2009).
+    https://link.springer.com/chapter/10.1007/978-1-84800-356-9_2
+    https://www.researchgate.net/publication/227021342_Examining_Trust_Forgiveness_and_Regret_as_Computational_Concepts
+    """
     name = str
     maximum = float
     minimum = float
@@ -26,6 +31,14 @@ class MarshBriggsScale(Scale, UpdatableInterface):
 
     def __init__(self, minimum, maximum, default=0.0, cooperation=0.5, forgivability=-0.5,
                  name="Trust Scale by Marsh and Briggs (2009)"):
+        """
+        :type minimum: float
+        :type maximum: float
+        :type default: float
+        :type cooperation: float
+        :type forgivability: float
+        :type name: str
+        """
         self.name = name
         self.maximum = maximum
         self.minimum = minimum
