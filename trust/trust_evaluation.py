@@ -1,9 +1,9 @@
-from artifacts.content_trust.recommendation import recommendation as content_trust_recommendation
-from artifacts.content_trust.direct_experience import direct_experience as content_trust_direct_experience
-from artifacts.content_trust.popularity import popularity as content_trust_popularity
-from artifacts.content_trust.authority import authority as content_trust_authority
-from artifacts.content_trust.topic import topic as content_trust_topic
-from artifacts.final_trust import weighted_avg_final_trust
+from trust.artifacts.content_trust.recommendation import recommendation as content_trust_recommendation
+from trust.artifacts.content_trust.direct_experience import direct_experience as content_trust_direct_experience
+from trust.artifacts.content_trust.popularity import popularity as content_trust_popularity
+from trust.artifacts.content_trust.authority import authority as content_trust_authority
+from trust.artifacts.content_trust import topic as content_trust_topic
+from trust.artifacts.final_trust import weighted_avg_final_trust
 from models import Scale
 from loggers.basic_logger import BasicLogger
 

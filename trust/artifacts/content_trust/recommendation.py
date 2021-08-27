@@ -1,4 +1,4 @@
-from artifacts.content_trust.direct_experience import direct_experience
+from trust.artifacts.content_trust.direct_experience import direct_experience
 from exec.ask_others import ask_other_agent
 
 

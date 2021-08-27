@@ -1,5 +1,5 @@
-from artifacts.content_trust.direct_experience import direct_experience
-from artifacts.content_trust.recommendation import ask_for_recommendations
+from trust.artifacts.content_trust.direct_experience import direct_experience
+from trust.artifacts.content_trust.recommendation import ask_for_recommendations
 from exec.ask_others import ask_other_agent
 
 
