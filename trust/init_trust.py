@@ -1,4 +1,4 @@
-from trust_evaluation import eval_trust
+from .trust_evaluation import eval_trust
 
 
 def eval_trust_with_init(agent, other_agent, current_topic, agent_behavior, scale, logger, discovery):
