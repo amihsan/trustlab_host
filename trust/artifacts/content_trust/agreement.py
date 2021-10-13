@@ -3,8 +3,6 @@
 # The logfile is checked for the right tag and 
 # corresponding xp value
 
-from artifacts.direct_experience import direct_experience
-
 def agreement(ID, entity, tag):
     pass
     # file_name = ID + ".txt"
