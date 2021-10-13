@@ -5,7 +5,7 @@ This is the host library of the TrustLab aTLAS and thus a submodule of the Trust
 
 ## Setup
 
-1. Ensure available code of aTLAS. (https://gitlab.hrz.tu-chemnitz.de/vsr/phd/siegert/trustlab)
+1. Ensure setup of aTLAS. (https://gitlab.hrz.tu-chemnitz.de/vsr/phd/siegert/trustlab)
 
 2. If not on same machine as aTLAS, clone submodule.
 
