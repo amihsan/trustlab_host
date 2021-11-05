@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import re
 from loggers.basic_logger import BasicLogger
 from config import LOG_PATH
 
@@ -42,44 +43,57 @@ class FileLogger(BasicLogger):
         return topic_lines
 
     def read_lines_from_trust_log(self, len_filter=None):
+        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}'" \
+                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {trust_value}"
         log_path = self.log_path / f"trust_log.txt"
+        line_regex = r'(?P<date_time>.*), \'(?P<agent>.*)\' trusts \'(?P<other_agent>.*)\': (?P<trust_value>.*)'
+        return self.get_dict_of_log_lines_in_file(self, log_path, line_regex, len_filter)
+
+    def get_dict_of_log_lines_in_file(self, log_path, line_regex, len_filter):
         with open(log_path.absolute(), "r+") as log_file:
             log_lines = log_file.readlines()
-            if len_filter and type(len_filter) is int:
-                log_lines = self.apply_len_filter(log_lines, len_filter)
-        return log_lines
+        if len_filter and type(len_filter) is int:
+            log_lines = self.apply_len_filter(log_lines, len_filter)
+        line_dict = {}
+        for line in log_lines:
+            match = re.search(line_regex, line)
 
-    def write_to_agent_history(self, agent, other_agent, history_value):
+        return line_dict
+
+    def write_to_agent_history(self, agent, other_agent, history_value, resource_id=None):
         log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
-                print(f"{BasicLogger.get_current_time()}, history trust value from: '{other_agent}': {history_value}",
-                      file=history_file)
+                print(f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'"
+                      f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}", file=history_file)
 
-    def write_bulk_to_agent_history(self, agent, history):
+    def write_bulk_to_agent_history(self, agent, history, resource_id=None):
         log_path = self.log_path / f"{agent}_history.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
                 for other_agent, history_value in history.items():
-                    print(f"{BasicLogger.get_current_time()}, history trust value from '{other_agent}': {history_value}"
+                    print(f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'"
+                          f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
                           , file=history_file)
 
-    def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value):
+    def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value, resource_id=None):
         log_path = self.log_path / f"{agent}_topic.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as topic_file:
-                print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding '{topic}': "
-                      f"{topic_value}", file=topic_file)
+                print(f"{BasicLogger.get_current_time()}, topic trust on '{other_agent}'"
+                      f"{f' in resource <{resource_id}>' if resource_id else ''}"
+                      f" regarding '{topic}': {topic_value}", file=topic_file)
 
-    def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
+    def write_bulk_to_agent_topic_trust(self, agent, topic_trust, resource_id=None):
         log_path = self.log_path / f"{agent}_topic.txt"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as topic_file:
                 for other_agent, topic_dict in topic_trust.items():
                     if topic_dict:
                         for topic, topic_value in topic_dict.items():
-                            print(f"{BasicLogger.get_current_time()}, topic trust value from '{other_agent}' regarding "
-                                  f"'{topic}': {topic_value}", file=topic_file)
+                            print(f"{BasicLogger.get_current_time()}, topic trust on '{other_agent}'"
+                                  f"{f' in resource <{resource_id}>' if resource_id else ''}"
+                                  f" regarding '{topic}': {topic_value}", file=topic_file)
 
     def write_to_agent_message_log(self, observation):
         log_path = self.log_path / f"{observation.receiver}.txt"
@@ -90,16 +104,18 @@ class FileLogger(BasicLogger):
             with open(log_path.absolute(), "a+") as agent_log:
                 print(write_string, file=agent_log)
 
-    def write_to_trust_log(self, agent, other_agent, trust_value):
+    def write_to_trust_log(self, agent, other_agent, trust_value, resource_id=None):
         log_path = self.log_path / "trust_log.txt"
-        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}' with value: {trust_value}"
+        write_string = f"{BasicLogger.get_current_time()}, '{agent}' trusts '{other_agent}'" \
+                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), 'a+') as trust_log:
                 print(write_string, file=trust_log)
 
-    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
+    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value, resource_id=None):
         log_path = self.log_path / f"{agent}_trust_log.txt"
-        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value from '{other_agent}': {trust_value}"
+        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value for '{other_agent}'" \
+                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as trust_log:
                 print(write_string,  file=trust_log)

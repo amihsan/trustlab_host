@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from models import Observation
 
 
 class BasicLogger(ABC):
@@ -72,7 +73,7 @@ class BasicLogger(ABC):
         pass
 
     @abstractmethod
-    def write_to_agent_history(self, agent, other_agent, history_value):
+    def write_to_agent_history(self, agent, other_agent, history_value, resource_id=None):
         """
         Writes `history_value` with reference to `other_agent` in the `agent`'s history log.
 
@@ -82,12 +83,14 @@ class BasicLogger(ABC):
         :type other_agent: str
         :param history_value: Trust value.
         :type history_value: float or int
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
 
     @abstractmethod
-    def write_bulk_to_agent_history(self, agent, history):
+    def write_bulk_to_agent_history(self, agent, history, resource_id=None):
         """
         Writes all items in `history` in the `agent`'s history log.
 
@@ -95,12 +98,14 @@ class BasicLogger(ABC):
         :type agent: str
         :param history: History to add to history log with other agents as keys and their trust values as dict values.
         :type history: dict
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
 
     @abstractmethod
-    def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value):
+    def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value, resource_id=None):
         """
         Writes `topic_value` with reference to `other_agent` and `topic` in the `agent`'s topic log.
 
@@ -112,12 +117,14 @@ class BasicLogger(ABC):
         :type topic: str
         :param topic_value: Trust value.
         :type topic_value: float or int
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
 
     @abstractmethod
-    def write_bulk_to_agent_topic_trust(self, agent, topic_trust):
+    def write_bulk_to_agent_topic_trust(self, agent, topic_trust, resource_id=None):
         """
         Writes all items in `topic_trust` in the `agent`'s topic log.
 
@@ -125,6 +132,8 @@ class BasicLogger(ABC):
         :type agent: str
         :param topic_trust: Topic trusts with {other_agent: {topic: trust_value}}
         :type topic_trust: dict
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
@@ -135,13 +144,13 @@ class BasicLogger(ABC):
         Writes `observation` to message log.
 
         :param observation: Observation to log.
-        :type observation: str
+        :type observation: Observation
         :rtype: None
         """
         pass
 
     @abstractmethod
-    def write_to_trust_log(self, agent, other_agent, trust_value):
+    def write_to_trust_log(self, agent, other_agent, trust_value, resource_id=None):
         """
         Writes `trust_value` with reference to `other_agent` in the trust log.
 
@@ -151,12 +160,14 @@ class BasicLogger(ABC):
         :type other_agent: str
         :param trust_value: Trust value.
         :type trust_value: float or int
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
 
     @abstractmethod
-    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value):
+    def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value, resource_id=None):
         """
         Writes `trust_value` with reference to `other_agent` and `metric_str` in the `agent`'s trust log.
 
@@ -168,6 +179,8 @@ class BasicLogger(ABC):
         :type other_agent: str
         :param trust_value: Trust value.
         :type trust_value: float or int
+        :param resource_id: The ID of a resource to (dis)trust in.
+        :type resource_id: str
         :rtype: None
         """
         pass
