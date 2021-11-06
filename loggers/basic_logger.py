@@ -25,20 +25,8 @@ class BasicLogger(ABC):
     @abstractmethod
     def read_lines_from_agent_history(self, agent, len_filter=None):
         """
-        Reads in the `agent`'s history log and returns all or max. len given by `len_filter`.
-
-        :param agent: Agent to read log data lines about.
-        :type agent: str
-        :param len_filter: Number of lines to return.
-        :type len_filter: int
-        :rtype: list
-        """
-        pass
-
-    @abstractmethod
-    def read_lines_from_agent_trust_log(self, agent, len_filter=None):
-        """
-        Reads in the `agent`'s trust logs and returns all or max. len given by `len_filter`.
+        Reads in the `agent`'s history log and returns all or max. len given by `len_filter`,
+        where return is list of dicts representing information per line.
 
         :param agent: Agent to read log data lines about.
         :type agent: str
@@ -51,7 +39,36 @@ class BasicLogger(ABC):
     @abstractmethod
     def read_lines_from_agent_topic_trust(self, agent, len_filter=None):
         """
-        Reads in the agent`'s topic trust log and returns all or max. len given by `len_filter`.
+        Reads in the agent`'s topic trust log and returns all or max. len given by `len_filter`,
+        where return is list of dicts representing information per line.
+
+        :param agent: Agent to read log data lines about.
+        :type agent: str
+        :param len_filter: Number of lines to return.
+        :type len_filter: int
+        :rtype: list
+        """
+        pass
+
+    @abstractmethod
+    def read_lines_from_agent_trust_log(self, agent, len_filter=None):
+        """
+        Reads in the `agent`'s trust logs and returns all or max. len given by `len_filter`,
+        where return is list of dicts representing information per line.
+
+        :param agent: Agent to read log data lines about.
+        :type agent: str
+        :param len_filter: Number of lines to return.
+        :type len_filter: int
+        :rtype: list
+        """
+        pass
+
+    @abstractmethod
+    def read_lines_from_agent_trust_log_str(self, agent, len_filter=None):
+        """
+        Reads in the `agent`'s trust logs and returns all or max. len given by `len_filter`,
+        where return is list of log strings.
 
         :param agent: Agent to read log data lines about.
         :type agent: str
@@ -64,7 +81,20 @@ class BasicLogger(ABC):
     @abstractmethod
     def read_lines_from_trust_log(self, len_filter=None):
         """
-        Reads in the supervisor's local trust log and returns all or max. len given by `len_filter`.
+        Reads in the supervisor's local trust log and returns all or max. len given by `len_filter`,
+        where return is list of dicts representing information per line.
+
+        :param len_filter: Number of lines to return.
+        :type len_filter: int
+        :rtype: list
+        """
+        pass
+
+    @abstractmethod
+    def read_lines_from_trust_log_str(self, len_filter=None):
+        """
+        Reads in the supervisor's local trust log and returns all or max. len given by `len_filter`,
+        where return is list of log strings.
 
         :param len_filter: Number of lines to return.
         :type len_filter: int
@@ -182,19 +212,6 @@ class BasicLogger(ABC):
         :param resource_id: The ID of a resource to (dis)trust in.
         :type resource_id: str
         :rtype: None
-        """
-        pass
-
-    @abstractmethod
-    def line_about_other_agent(self, line, other_agent):
-        """
-        Returns whether line given is about other agent.
-
-        :param line: The data line where the other agent should be in.
-        :type line: str
-        :param other_agent: The other agent which should be in the line.
-        :type other_agent: str
-        :rtype: bool
         """
         pass
 

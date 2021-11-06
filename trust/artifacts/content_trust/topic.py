@@ -20,10 +20,9 @@ def topic(agent, other_agent, current_topic, scale, logger):
     :rtype: float or int
     """
     topic_lines = logger.read_lines_from_agent_topic_trust(agent)
-    regex = re.compile('(?<=\\\')(.*?)(?=\\\')')  # regex to find everything between two apostrophes
     # getting all topic values of the agent respective to the other agent and the current topic
-    topic_values = [float(entry.split(" ")[-1]) for entry in topic_lines
-                    if regex.findall(entry)[0] == other_agent and regex.findall(entry)[2] == current_topic]
+    topic_values = [float(entry['trust_value']) for entry in topic_lines
+                    if entry['other_agent'] == other_agent and entry['topic'] == current_topic]
     # calculate topic trust
     topic_value = sum(topic_values) / len(topic_values) if len(topic_values) > 0 else scale.default_value()
     return topic_value
