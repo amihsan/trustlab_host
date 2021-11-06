@@ -97,8 +97,8 @@ class ScenarioRun(multiproc.Process):
                     "scenario_run_id": self.scenario_run_id,
                     "observation_id": observation_done_dict["observation_id"],
                     "receiver": observation_done_dict["receiver"],
-                    "trust_log": '<br>'.join(self.logger.read_lines_from_trust_log()),
-                    "receiver_trust_log": '<br>'.join(self.logger.read_lines_from_agent_trust_log(
+                    "trust_log": '<br>'.join(self.logger.read_lines_from_trust_log_str()),
+                    "receiver_trust_log": '<br>'.join(self.logger.read_lines_from_agent_trust_log_str(
                         observation_done_dict["receiver"])),
                 }
                 self.send_queue.put(done_message)

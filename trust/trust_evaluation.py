@@ -32,23 +32,23 @@ def eval_trust(agent, other_agent, current_topic, agent_behavior, scale, logger,
     trust_values = {}
     if 'content_trust.direct_experience' in agent_behavior:
         direct_experience_value = content_trust_direct_experience(agent, other_agent, scale, logger)
-        logger.write_to_agent_trust_log(agent, "direct experience", other_agent, direct_experience_value)
+        logger.write_to_agent_trust_log(agent, 'content_trust.direct_experience', other_agent, direct_experience_value)
         trust_values['content_trust.direct_experience'] = direct_experience_value
     if 'content_trust.authority' in agent_behavior:
         authority_value = content_trust_authority(agent_behavior['content_trust.authority'], other_agent, scale)
-        logger.write_to_agent_trust_log(agent, "authority", other_agent, authority_value)
+        logger.write_to_agent_trust_log(agent, 'content_trust.authority', other_agent, authority_value)
         trust_values['content_trust.authority'] = authority_value
     if 'content_trust.popularity' in agent_behavior:
         popularity_value = content_trust_popularity(agent, other_agent, discovery, scale, logger)
-        logger.write_to_agent_trust_log(agent, "popularity", other_agent, popularity_value)
+        logger.write_to_agent_trust_log(agent, 'content_trust.popularity', other_agent, popularity_value)
         trust_values['content_trust.popularity'] = popularity_value
     if 'content_trust.recommendation' in agent_behavior:
         recommendation_value = content_trust_recommendation(agent, other_agent, scale, logger, discovery)
-        logger.write_to_agent_trust_log(agent, "recommendation", other_agent, recommendation_value)
+        logger.write_to_agent_trust_log(agent, 'content_trust.recommendation', other_agent, recommendation_value)
         trust_values['content_trust.recommendation'] = recommendation_value
     if 'content_trust.topic' in agent_behavior:
         topic_value = content_trust_topic(agent, other_agent, current_topic, scale, logger)
-        logger.write_to_agent_trust_log(agent, "topic", other_agent, topic_value)
+        logger.write_to_agent_trust_log(agent, 'content_trust.topic', other_agent, topic_value)
         trust_values['content_trust.topic'] = topic_value
     # # old code from internship (do not use without refactoring)
     # if 'age' in agent_behavior:
