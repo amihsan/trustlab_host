@@ -99,6 +99,17 @@ class Scale(ABC):
         """
         pass
 
+    def normalize_value_to_scale(self, value, data_min, data_max):
+        """
+        Calculates a value that is normalized for the scale interval
+
+        :param value: The value that should be normalized
+        :param data_min: Smallest possible value for the given data
+        :param data_max: Largest possible value for the given data
+        :return: The normalized value
+        """
+        pass
+
     def __init__(self):
         if hasattr(self, 'maximum') and hasattr(self, 'minimum'):
             if type(self.maximum) is float and type(self.minimum) is float:

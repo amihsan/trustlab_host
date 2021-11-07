@@ -29,6 +29,17 @@ class MarshBriggsScale(Scale, UpdatableInterface):
     def minimum_value(self):
         return self.minimum
 
+    def normalize_value_to_scale(self, value, data_min, data_max):
+        """
+        :type value: float
+        :type data_min: float
+        :type data_max: float
+        :rtype: float
+        """
+
+        return (self.maximum_value() - self.minimum_value()) * (value - data_min) / (
+                    data_max - data_min) + self.minimum_value()
+
     def __init__(self, minimum, maximum, default=0.0, cooperation=0.5, forgivability=-0.5,
                  name="Trust Scale by Marsh and Briggs (2009)"):
         """
