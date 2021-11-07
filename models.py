@@ -33,31 +33,34 @@ class Observation(UpdatableInterface):
     author = str
     topic = str
     message = str
+    details = dict
 
-    def __init__(self, observation_id, before, sender, receiver, author, topic, message):
+    def __init__(self, observation_id, before, sender, receiver, author, message, details):
         """
         :type observation_id: int
         :type before: list
         :type sender: str
         :type receiver: str
         :type author: str
-        :type topic: str
         :type message: str
+        :type details: dict
         """
+
         self.observation_id = observation_id
         self.before = before
         self.sender = sender
         self.receiver = receiver
         self.author = author
-        self.topic = topic
         self.message = message
+        self.details = details
+
         super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, author=author,
-                         topic=topic, message=message)
+                         message=message, details=details)
 
     def __eq__(self, other):
         return self.observation_id == other.observation_id and self.before == other.before and \
                self.sender == other.sender and self.receiver == other.receiver and self.author == other.author \
-               and self.topic == other.topic and self.message == other.message
+               and self.message == other.message and self.details == other.details
 
 
 class Scale(ABC):
