@@ -30,18 +30,18 @@ class Observation(UpdatableInterface):
     before = list
     sender = str
     receiver = str
-    author = str
+    authors = list
     topic = str
     message = str
     details = dict
 
-    def __init__(self, observation_id, before, sender, receiver, author, message, details):
+    def __init__(self, observation_id, before, sender, receiver, authors, message, details):
         """
         :type observation_id: int
         :type before: list
         :type sender: str
         :type receiver: str
-        :type author: str
+        :type authors: list
         :type message: str
         :type details: dict
         """
@@ -50,16 +50,16 @@ class Observation(UpdatableInterface):
         self.before = before
         self.sender = sender
         self.receiver = receiver
-        self.author = author
+        self.authors = authors
         self.message = message
         self.details = details
 
-        super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, author=author,
+        super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, authors=authors,
                          message=message, details=details)
 
     def __eq__(self, other):
         return self.observation_id == other.observation_id and self.before == other.before and \
-               self.sender == other.sender and self.receiver == other.receiver and self.author == other.author \
+               self.sender == other.sender and self.receiver == other.receiver and self.authors == other.authors \
                and self.message == other.message and self.details == other.details
 
 
