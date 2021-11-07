@@ -35,7 +35,7 @@ class ServerThread(Thread):
                         trust_value = eval_trust_with_init(self.agent, observation.sender, observation.topic,
                                                            self.agent_behavior, self.scale, self.logger, self.discovery)
                     else:
-                        trust_value = eval_trust(self.agent, observation.sender, observation.topic, self.agent_behavior,
+                        trust_value = eval_trust(self.agent, observation.sender, observation, self.agent_behavior,
                                                  self.scale, self.logger, self.discovery)
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value)
                     self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic,

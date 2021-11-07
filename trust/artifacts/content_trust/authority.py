@@ -13,7 +13,7 @@ def authority(agent_authorities, other_agent, scale):
     :return: Returns authority trust value.
     :rtype: float or int
     """
-    if other_agent in agent_authorities:
+    if other_agent in agent_authorities:        
         return scale.maximum_value()
     else:
-        return scale.minimum_to_trust_others()
+        return scale.default_value()
