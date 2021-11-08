@@ -284,9 +284,18 @@ class Scenario(UpdatableInterface):
             scale_dict = obj_desc['scales_per_agent'][agent]
             cls = load_scale_spec(scale_dict)
             number_type = cls.maximum
-            Scenario.format_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
-            Scenario.format_number_type_in_dictionary(obj_desc['history'][agent], number_type)
-            Scenario.format_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
+            if type(obj_desc['scales_per_agent'][agent]) is dict:
+                Scenario.format_number_type_in_dictionary(obj_desc['scales_per_agent'][agent], number_type)
+            else:
+                Scenario.format_number_type_in_listing(obj_desc['scales_per_agent'][agent], number_type)
+            if type(obj_desc['history'][agent]) is dict:
+                Scenario.format_number_type_in_dictionary(obj_desc['history'][agent], number_type)
+            else:
+                Scenario.format_number_type_in_listing(obj_desc['history'][agent], number_type)
+            if type(obj_desc['metrics_per_agent'][agent]) is dict:
+                Scenario.format_number_type_in_dictionary(obj_desc['metrics_per_agent'][agent], number_type)
+            else:
+                Scenario.format_number_type_in_listing(obj_desc['metrics_per_agent'][agent], number_type)
 
     def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
                  description="No one described this scenario so far."):
