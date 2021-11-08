@@ -64,8 +64,11 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         logger.write_to_agent_trust_log(agent, 'content_trust.incentive', other_agent, incentive_value, resource_id)
         trust_values['content_trust.incentive'] = incentive_value
 
-    if 'content_trust.deception' in observation.details:
+    if 'content_trust.deception' in observation.details and 'content_trust.deception' in agent_behavior:
         deception_value = observation.details['content_trust.deception']
+        # deceptive
+        if deception_value > agent_behavior['content_trust.deception']:
+            return scale.minimum_value()
         logger.write_to_agent_trust_log(agent, 'content_trust.deception', other_agent, deception_value, resource_id)
         trust_values['content_trust.deception'] = deception_value
 
@@ -94,7 +97,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
 
     if 'content_trust.provenance' in agent_behavior:
         provenance_value = content_trust_provenance(observation.authors,
-                                                    agent_behavior['content_trust.trusted_authors'], scale)
+                                                    agent_behavior['content_trust.provenance'], scale)
         logger.write_to_agent_trust_log(agent, 'content_trust.provenance', other_agent, provenance_value, resource_id)
         trust_values['content_trust.provenance'] = provenance_value
 
