@@ -174,7 +174,7 @@ class FileLogger(BasicLogger):
 
     def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value, resource_id=None):
         log_path = self.log_path / f"{agent}_trust_log.log"
-        write_string = f"{BasicLogger.get_current_time()}, {metric_str} trust value for '{other_agent}'" \
+        write_string = f"{BasicLogger.get_current_time()}, '{metric_str}' trust value for '{other_agent}'" \
                        f"{f' in resource <{resource_id}>' if resource_id else ''}: {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as trust_log:
