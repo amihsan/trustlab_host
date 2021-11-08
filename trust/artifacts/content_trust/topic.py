@@ -1,28 +1,25 @@
-import re
+from models import Scale
 
 
-def topic(agent, other_agent, current_topic, scale, logger):
+def topic(current_topics, trusted_topics, scale):
     """
-    Calculate topic trust by reading from logger all past topic trust for other agent and topic,
-    and then averaging all values or giving out default_value.
+    Calculate topic trust by reading the relevant topics for the current resource and comparing them to the set of
+    topics that the resource is trusted on. The returned topic trust value expresses the congruency of both sets,
+    normalized to the given scale.
 
-    :param agent: The agent which calculates the trust. (start of relationship)
-    :type agent: str
-    :param other_agent: The other agent for which the trust relationship is calculated. (end of relationship)
-    :type other_agent: str
-    :param current_topic: The topic of the message received and on which the trust is calculated.
-    :type current_topic: str
+    :param current_topics: The topics of the message received and on which the trust is calculated.
+    :type current_topics: list
+    :param trusted_topics: The topics that the resource is trusted on.
+    :type trusted_topics: list
     :param scale: The Scale object to be used by the agent.
     :type scale: Scale
-    :param logger: The logger object to be used by the agent.
-    :type logger: BasicLogger
     :return: The topic trust value.
     :rtype: float or int
     """
-    topic_lines = logger.read_lines_from_agent_topic_trust(agent)
-    # getting all topic values of the agent respective to the other agent and the current topic
-    topic_values = [float(entry['trust_value']) for entry in topic_lines
-                    if entry['other_agent'] == other_agent and entry['topic'] == current_topic]
-    # calculate topic trust
-    topic_value = sum(topic_values) / len(topic_values) if len(topic_values) > 0 else scale.default_value()
-    return topic_value
+
+    if len(current_topics) == 0:
+        return scale.default_value()
+
+    count_congruent = len(set(current_topics) & set(trusted_topics))
+    score = count_congruent / len(current_topics)
+    return scale.normalize_value_to_scale(score, 0, 1)

@@ -1,3 +1,4 @@
+from models import Scale
 
 
 def authority(agent_authorities, other_agent, scale):

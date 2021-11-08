@@ -13,7 +13,7 @@ def age_check(agent_behavior, observation, scale):
     :param observation: Content and metadata of message received and on which the trust is calculated.
     :type observation: Observation
     :param scale: The trust scale used by the agent
-    :type Scale
+    :type scale: Scale
     :return: An age punishment value that is equal to the scale maximum value for recent publications and falls within
     [default, max) if it exceeded the allowed lifetime.
     :rtype: float or int

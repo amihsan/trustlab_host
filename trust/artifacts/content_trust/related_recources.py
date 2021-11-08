@@ -1,24 +1,28 @@
+from trust.artifacts.content_trust.direct_experience import direct_experience
+from models import Scale
+from loggers.basic_logger import BasicLogger
+from datetime import datetime
 
-def related(ID, tag):
-    pass
-    # file_name = ID + ".txt"
-    # log_path = Logging.LOG_PATH / file_name
-    # fo = open(log_path.absolute(), "r+")
-    # logfile = fo.read()
-    # filesize = len(logfile)
-    # fo.seek(0)
-    # result_count = 0
-    # ex = 0
-    # result = 0
-    # while fo.tell() < filesize:
-    #     timelog_line = fo.readline()
-    #     if timelog_line[56:58] == tag:
-    #         service_satisfaction = timelog_line[59:63]
-    #         if timelog_line[59:63] == '0 |m':
-    #             service_satisfaction = timelog_line[59:60]
-    #         result_count = result_count + 1
-    #         ex += float(service_satisfaction)
-    #         result = format(ex / result_count, '.2f')
-    #
-    # fo.close()
-    # return result
+
+def related(agent, related_resources, recency_limit, scale, logger):
+    """
+    Evaluates the resources referenced by the resource that is currently evaluated by retrieving their past
+    direct experience values and calculating its average.
+
+    :param agent: The agent evaluating the resource.
+    :type agent: str
+    :param related_resources: A list of URIs of the resources that are related to or referenced by the evaluated resource.
+    :type related_resources: list
+    :param recency_limit: A datetime object which is used for "forgetting" old history entries
+    :type recency_limit: datetime
+    :param scale: The Scale object to be used by the agent.
+    :type scale: Scale
+    :param logger: The logger object to be used by the agent.
+    :type logger: BasicLogger
+    :return: The Related Resources trust value
+    :rtype float or int
+    """
+
+    experiences = [direct_experience(agent, resource_id, recency_limit, scale, logger) for resource_id in
+                   related_resources]
+    return sum(experiences) / len(experiences) if len(experiences) > 0 else scale.default_value()
