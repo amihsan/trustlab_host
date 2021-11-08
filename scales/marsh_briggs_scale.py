@@ -29,6 +29,15 @@ class MarshBriggsScale(Scale, UpdatableInterface):
     def minimum_value(self):
         return self.minimum
 
+    def cooperation_threshold(self):
+        return self.cooperation
+
+    def set_cooperation_threshold(self, new_cooperation_threshold):
+        """
+        :type new_cooperation_threshold: float
+        """
+        self.cooperation = new_cooperation_threshold
+
     def normalize_value_to_scale(self, value, data_min, data_max):
         """
         :type value: float

@@ -99,6 +99,22 @@ class Scale(ABC):
         """
         pass
 
+    @abstractmethod
+    def cooperation_threshold(self):
+        """
+        :return: represents the cooperation threshold for the current scale
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def set_cooperation_threshold(self, new_cooperation_threshold):
+        """
+        Changes the cooperation threshold for the current scale to the received value
+        """
+        pass
+
+    @abstractmethod
     def normalize_value_to_scale(self, value, data_min, data_max):
         """
         Calculates a value that is normalized for the scale interval
