@@ -21,7 +21,7 @@ def direct_experience(agent, resource_id, recency_limit, scale, logger):
     :rtype: float or int
     """
 
-    history_lines = logger.read_lines_from_agent_trust_log(agent)
+    history_lines = logger.read_lines_from_agent_history(agent)
     # getting all history values of the agent respective to the evaluated resource and filters them based on their age
     # and the recency limit set in the trust preferences of the agent
     history = [float(entry['trust_value']) for entry in history_lines if entry['resource_id'] == resource_id and
@@ -48,7 +48,7 @@ def get_combined_direct_experience_for_agent(agent, third_agent, logger, recency
     :rtype: float or int
     """
 
-    history_lines = logger.read_lines_from_agent_trust_log(agent)
+    history_lines = logger.read_lines_from_agent_history(agent)
     history = [float(entry['trust_value']) for entry in history_lines if entry['other_agent'] == third_agent and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit]
     # calculate direct experience

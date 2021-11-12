@@ -30,7 +30,7 @@ def recommendation(agent, other_agent, resource_id, scale, logger, discovery, re
     agents_to_ask = [third_agent for third_agent in discovery if third_agent != agent and third_agent != other_agent and
                      get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) >=
                      scale.minimum_to_trust_others()]
-    recommendations = ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery)
+    recommendations = ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit)
     return statistics.median(recommendations) if len(recommendations) > 0 else scale.default_value()
 
 
@@ -56,17 +56,17 @@ def ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, di
     :rtype: list
     """
     recommendations = []
-    message = f"recommendation_{resource_id}"
+    message = f"recommendation_{resource_id}_{datetime.strftime(recency_limit, BasicLogger.get_time_format_string())}"
     for third_agent in agents_to_ask:
         remote_ip, remote_port = discovery[third_agent].split(":")
-        received_value = ask_other_agent(remote_ip, int(remote_port), message)
+        received_value = float(ask_other_agent(remote_ip, int(remote_port), message))
         recommendations.append(
             get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) * received_value
         )
     return recommendations
 
 
-def recommendation_response(agent, resource_id, scale, logger):
+def recommendation_response(agent, resource_id, recency_limit, scale, logger):
     """
     Giving back the direct XP as the recommendation on other agent in the point of view from agent.
 
@@ -74,6 +74,8 @@ def recommendation_response(agent, resource_id, scale, logger):
     :type agent: str
     :param resource_id: The URI of the evaluated resource.
     :type resource_id: str
+    :param recency_limit: A datetime object which is used for "forgetting" old history entries
+    :type recency_limit: datetime
     :param scale: The Scale object to be used by the agent.
     :type scale: Scale
     :param logger: The logger object to be used by the agent.
@@ -81,4 +83,4 @@ def recommendation_response(agent, resource_id, scale, logger):
     :return: The recommendation trust values of third agents on other_agent.
     :rtype: list
     """
-    return direct_experience(agent, resource_id, scale, logger)
+    return direct_experience(agent, resource_id, recency_limit, scale, logger)
