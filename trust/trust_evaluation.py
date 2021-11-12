@@ -129,7 +129,12 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
                                         resource_id)
         trust_values['content_trust.user_expertise'] = user_expertise_value
 
-    # TODO: implement popularity somehow
+    if 'content_trust.popularity' in agent_behavior:
+        popularity_value = content_trust_popularity(agent, other_agent, resource_id,
+                                                    agent_behavior['content_trust.popularity']['peers'], discovery,
+                                                    scale, recency_limit)
+        logger.write_to_agent_trust_log(agent, 'content_trust.popularity', other_agent, popularity_value, resource_id)
+        trust_values['content_trust.popularity'] = popularity_value
 
     """
     final Trust calculations
