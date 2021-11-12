@@ -74,12 +74,15 @@ class FileLogger(BasicLogger):
         :type strip: bool
         :rtype: list
         """
-        with open(log_path.absolute(), "r+") as log_file:
-            # strip deletes new line feeds, and filter deletes empty lines from list
-            log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
-        if len_filter and type(len_filter) is int:
-            log_lines = self.apply_len_filter(log_lines, len_filter)
-        return log_lines
+        try:
+            with open(log_path.absolute(), "r+") as log_file:
+                # strip deletes new line feeds, and filter deletes empty lines from list
+                log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
+            if len_filter and type(len_filter) is int:
+                log_lines = self.apply_len_filter(log_lines, len_filter)
+            return log_lines
+        except FileNotFoundError:
+            return []
 
     def read_in_dicts(self, log_path, rex, rex_resource, groups, groups_resource, len_filter):
         """
@@ -130,10 +133,19 @@ class FileLogger(BasicLogger):
         log_path = self.log_path / f"{agent}_history.log"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
-                for other_agent, history_value in history.items():
-                    write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
-                                   f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
-                    print(write_string, file=history_file)
+                if type(history) == list:
+                    for entry in history:
+                        other_agent, resource_id, history_value = entry[0], entry[1], entry[2]
+                        write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
+                                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
+                        print(write_string, file=history_file)
+                elif type(history) == dict:
+                    for other_agent, history_value in history.items():
+                        write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
+                                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
+                        print(write_string, file=history_file)
+                else:
+                    raise TypeError("Unexpected type for History object")
 
     def write_to_agent_topic_trust(self, agent, other_agent, topic, topic_value, resource_id=None):
         log_path = self.log_path / f"{agent}_topic.log"
