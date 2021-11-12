@@ -1,4 +1,3 @@
-<div id="top"></div>
 
 <br />
 <div align="center">
@@ -33,8 +32,6 @@
 - [Acknowledgements](#-acknowledgements)
 
 </details>
-
----
 
 ## 💡 About
 
@@ -88,8 +85,6 @@ for a decentralized web has to be done manually with a high effort.
 1. Python 3.7
 2. Python pipenv
 
-<p align="right"><a href="#top">back to 🔝</a></p>
-
 ## ⚡ Getting Started
 
 1. Ensure setup of [aTLAS web application and director][trustlab-repo].
@@ -100,8 +95,6 @@ for a decentralized web has to be done manually with a high effort.
     ```bash
     pipenv install
     ```
-   
-<p align="right"><a href="#top">back to 🔝</a></p>
 
 ## 👟 Usage
 
@@ -116,8 +109,6 @@ for a decentralized web has to be done manually with a high effort.
     python supervisors.py -h
     ```
 
-<p align="right"><a href="#top">back to 🔝</a></p>
-
 ## 👀 Insights
 
 Here are insights on the assumptions which are assumed by the code.
@@ -126,8 +117,6 @@ Here are insights on the assumptions which are assumed by the code.
 - The connectors are assumed to be placed in ``connectors`` directory.
 - Every connector has its own file, which is named like the class but all lower case and seperated with ``_`` where camel case inserted capital chars.
 - A new connector class should be inserted in the choices of the connectors argument in supervisor's argparse.
-
-<p align="right"><a href="#top">back to 🔝</a></p>
 
 ## ✍ Authors & Contributors
 
@@ -140,8 +129,6 @@ All authors of this work in alphabetic order:
 - [Mahda Noura](https://vsr.informatik.tu-chemnitz.de/people/mahdanoura)
 - [Valentin Siegert][valentin-siegert-website]
 
-<p align="right"><a href="#top">back to 🔝</a></p>
-
 ## 👍 Acknowledgements
 
 The authors acknowledge the work of the following students:
@@ -149,7 +136,6 @@ The authors acknowledge the work of the following students:
 - Jun Li
 - Marten Rogall
 
-<p align="right"><a href="#top">back to 🔝</a></p>
 
 <!-- Identifiers, in alphabetical order -->
 [atlas-logo-grey]: https://github.com/ValentinSiegert/aTLAS/raw/master/_logos/atlas_grey.svg
