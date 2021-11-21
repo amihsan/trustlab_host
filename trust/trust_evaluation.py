@@ -87,12 +87,9 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         trust_values['content_trust.authority'] = authority_value
 
     if 'content_trust.topic' in agent_behavior:
-        topic_value = content_trust_topic(observation.details['content_trust.topics'],
-                                          observation.details['content_trust.trusted_topics'], scale)
+        topic_value = content_trust_topic(agent, other_agent, agent_behavior['content_trust.topic'],
+                                          observation.details['content_trust.topics'], recency_limit, logger, scale)
         logger.write_to_agent_trust_log(agent, 'content_trust.topic', other_agent, topic_value, resource_id)
-        for topic in observation.details['content_trust.topics']:
-            logger.write_to_agent_topic_trust(agent, other_agent, topic, topic_value, resource_id)
-
         trust_values['content_trust.topic'] = topic_value
 
     if 'content_trust.provenance' in agent_behavior:
@@ -146,4 +143,8 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         if agent_behavior['__final__']['name'] == 'weighted_average':
             final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'],
                                                          scale.default_value())
+
+    for topic in observation.details['content_trust.topics']:
+        logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
+
     return final_trust_value
