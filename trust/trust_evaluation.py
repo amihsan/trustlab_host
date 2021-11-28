@@ -79,7 +79,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
             if age_punishment_value < scale.maximum_value():
                 return scale.minimum_value()
         else:
-            trust_values['content_trust_age'] = age_punishment_value
+            trust_values['content_trust.age'] = age_punishment_value
 
     if 'content_trust.authority' in agent_behavior:
         authority_value = content_trust_authority(agent_behavior['content_trust.authority'], other_agent, scale)
