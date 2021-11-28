@@ -70,6 +70,9 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         deception_value = observation.details['content_trust.deception']
         # deceptive
         if deception_value < agent_behavior['content_trust.deception']:
+            if TIME_MEASURE:
+                print_time_measure(observation.observation_id, start)
+
             return scale.minimum_value()
         logger.write_to_agent_trust_log(agent, 'content_trust.deception', other_agent, deception_value, resource_id)
         trust_values['content_trust.deception'] = deception_value
@@ -79,6 +82,9 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         logger.write_to_agent_trust_log(agent, 'content_trust.age', other_agent, age_punishment_value, resource_id)
         if 'content_trust.enforce_lifetime' in agent_behavior and agent_behavior['content_trust.enforce_lifetime']:
             if age_punishment_value < scale.maximum_value():
+                if TIME_MEASURE:
+                    print_time_measure(observation.observation_id, start)
+
                 return scale.minimum_value()
         else:
             trust_values['content_trust.age'] = age_punishment_value
@@ -150,6 +156,19 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
 
     if TIME_MEASURE:
-        print("evaluation " + str(observation.observation_id) + " " + str(datetime.utcnow().timestamp() - start) + " s")
+        print_time_measure(observation.observation_id, start)
 
     return final_trust_value
+
+
+def print_time_measure(observation_id, start_time):
+    """
+    Prints the execution time for the current trust evaluation
+
+    :param observation_id: ID of the observation that called the evaluation
+    :type observation_id: Any
+    :param start_time: UTC timestamp from the start of the execution of the evaluation
+    :type start_time: datetime
+    :return:
+    """
+    print("evaluation " + str(observation_id) + " " + str(datetime.utcnow().timestamp() - start_time) + " s")
