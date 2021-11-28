@@ -11,6 +11,7 @@ from trust.artifacts.final_trust import weighted_avg_final_trust
 from models import Scale, Observation
 from datetime import datetime
 from loggers.basic_logger import BasicLogger
+from config import TIME_MEASURE
 
 
 def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, discovery):
@@ -36,6 +37,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     """
     trust_values = {}
     resource_id = observation.details['uri']
+    start = datetime.utcnow().timestamp() if TIME_MEASURE else None
 
     # retrieve Recency age limit from agent trust preferences
     recency_limit = datetime.fromtimestamp(agent_behavior['content_trust.recency_age_limit'])
@@ -146,5 +148,8 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
 
     for topic in observation.details['content_trust.topics']:
         logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
+
+    if TIME_MEASURE:
+        print("evaluation " + str(observation.observation_id) + " " + str(datetime.utcnow().timestamp() - start) + " s")
 
     return final_trust_value
