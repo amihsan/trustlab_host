@@ -350,7 +350,8 @@ class Scenario(UpdatableInterface):
 
     def __eq__(self, other):
         return self.name == other.name and self.agents == other.agents and self.observations == other.observations and \
-               self.description == other.description
+               self.history == other.history and self.scales_per_agent == other.scales_per_agent and \
+               self.metrics_per_agent == other.metrics_per_agent and self.description == other.description
 
 
 def load_scale_spec(scale_dict):
