@@ -267,7 +267,23 @@ class Scenario(UpdatableInterface):
             else:
                 Scenario.format_number_type_in_listing(obj_desc['metrics_per_agent'][agent], number_type)
 
-    def __init__(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
+    def scenario_args(self, name, agents, observations, history, scales_per_agent, metrics_per_agent,
+                      description="No one described this scenario so far."):
+        """
+        This method only exists to give out the real arg list to the Scenario Factory, while init is only requesting
+        those mandatory arguments for the small constructor which is required for the large scenario files.
+
+        :type name: str
+        :type agents: list
+        :type observations: list
+        :type history: dict
+        :type scales_per_agent: dict
+        :type metrics_per_agent: dict
+        :type description: str
+        """
+        pass
+
+    def __init__(self, name, agents=None, observations=None, history=None, scales_per_agent=None, metrics_per_agent=None,
                  description="No one described this scenario so far."):
         """
         :type name: str
@@ -283,15 +299,17 @@ class Scenario(UpdatableInterface):
             #  -> maybe even not completely set and filled up with 0
             pass
         self.name = name
-        self.agents = agents
-        self.observations = observations
-        self.history = history
-        self.scales_per_agent = scales_per_agent
-        self.metrics_per_agent = metrics_per_agent
+        self.agents = agents if agents else []
+        self.observations = observations if observations else []
+        self.history = history if history else {}
+        self.scales_per_agent = scales_per_agent if scales_per_agent else {}
+        self.metrics_per_agent = metrics_per_agent if metrics_per_agent else {}
         self.description = description
-        self.check_consistency()
-        super().__init__(name=name, agents=agents, observations=observations, history=history,
-                         scales_per_agent=scales_per_agent, metrics_per_agent=metrics_per_agent,
+        # only check consistency if scenario is not on small load
+        if agents and observations and history and scales_per_agent and metrics_per_agent:
+            self.check_consistency()
+        super().__init__(name=name, agents=self.agents, observations=self.observations, history=self.history,
+                         scales_per_agent=self.scales_per_agent, metrics_per_agent=self.metrics_per_agent,
                          description=description)
 
     def __str__(self):
@@ -302,7 +320,8 @@ class Scenario(UpdatableInterface):
 
     def __eq__(self, other):
         return self.name == other.name and self.agents == other.agents and self.observations == other.observations and \
-               self.description == other.description
+               self.history == other.history and self.scales_per_agent == other.scales_per_agent and \
+               self.metrics_per_agent == other.metrics_per_agent and self.description == other.description
 
 
 def load_scale_spec(scale_dict):
