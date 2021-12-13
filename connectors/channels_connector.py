@@ -16,7 +16,7 @@ class ChannelsConnector(BasicConnector):
         connection_attempts = 0
         while self.websocket is None:
             try:
-                self.websocket = await websockets.client.connect(self.director_uri)
+                self.websocket = await websockets.connect(self.director_uri)
             except ConnectionRefusedError:
                 sleep(5 + connection_attempts * 2)
                 connection_attempts = connection_attempts + 1
@@ -56,18 +56,21 @@ class ChannelsConnector(BasicConnector):
         :param message: The received message as JSON object, where type has to be 'chunked_transfer'.
         :return: dict or list
         """
+        print(f'Received part {message["part_number"][0]}/{message["part_number"][1]} ...')
         if not self.chunked_parts and message['part_number'][0] == 1:
             self.chunked_parts = message['part']
         elif self.chunked_parts and message['part_number'][0] <= message['part_number'][1]:
             self.chunked_parts += message['part']
-            if message['part_number'][0] == message['part_number'][1]:
-                actual_message = json.loads(self.chunked_parts)
-                self.chunked_parts = None
-                await self.consuming_message(actual_message)
         else:
             print('Supervisor received chunked transfer with unexpected status.')
             print(f'Chunked parts {"exist" if self.chunked_parts else "do NOT exist"} '
                   f'while message indicates part {message["part_number"]}.')
+        await self.send_json({'type': 'chunked_transfer_ack', 'part_number': message['part_number']})
+        print(f'Send "chunked_transfer_ack" message for {message["part_number"][0]}/{message["part_number"][1]}')
+        if message['part_number'][0] == message['part_number'][1]:
+            actual_message = json.loads(self.chunked_parts)
+            self.chunked_parts = None
+            await self.consuming_message(actual_message)
 
     async def consumer_handler(self):
         async for message in self.websocket:
@@ -80,7 +83,7 @@ class ChannelsConnector(BasicConnector):
     async def producer_handler(self):
         while True:
             message = await self.send_queue.coro_get()
-            await self.websocket.send(json.dumps(message))
+            await self.send_json(message)
 
     async def handler(self):
         consumer_task = asyncio.ensure_future(self.consumer_handler())
