@@ -40,7 +40,10 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     start = datetime.utcnow().timestamp() if TIME_MEASURE else None
 
     # retrieve Recency age limit from agent trust preferences
-    recency_limit = datetime.fromtimestamp(agent_behavior['content_trust.recency_age_limit'])
+    if 'content_trust.recency_age_limit' in agent_behavior:
+        recency_limit = datetime.fromtimestamp(agent_behavior['content_trust.recency_age_limit'])
+    else:
+        recency_limit = datetime.fromtimestamp(0)
 
     if 'content_trust.context_level' in observation.details and 'content_trust.context_values' in agent_behavior:
         scale.set_cooperation_threshold(
