@@ -149,11 +149,10 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     """
     # delete all metrics from final trust calculation, which results are set to None
     trust_values = {metric: value for metric, value in trust_values.items() if value is not None}
-    final_trust_value = scale.default_value()
+    final_trust_value = None
     if agent_behavior['__final__']:
         if agent_behavior['__final__']['name'] == 'weighted_average':
-            final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'],
-                                                         scale.default_value())
+            final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'], None)
 
     for topic in observation.details['content_trust.topics']:
         logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)

@@ -64,6 +64,6 @@ def popularity_response(agent, resource_id, recency_limit, scale, logger):
     history_lines = logger.read_lines_from_agent_history(agent)
     history = [1 for entry in history_lines if entry['resource_id'] == resource_id and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit and
-               float(entry['trust_value']) >= scale.minimum_to_trust_others()]
+               entry['trust_value'] != 'None' and float(entry['trust_value']) >= scale.minimum_to_trust_others()]
 
     return len(history) > 0
