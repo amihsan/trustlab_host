@@ -18,7 +18,7 @@ def provenance(authors, trusted_authors, scale):
     """
 
     if len(authors) == 0:
-        return scale.default_value()
+        return None
 
     count_congruent = len(set(authors) & set(trusted_authors))
     score = count_congruent / len(authors)

@@ -25,4 +25,4 @@ def related(agent, related_resources, recency_limit, scale, logger):
 
     experiences = [direct_experience(agent, resource_id, recency_limit, scale, logger) for resource_id in
                    related_resources]
-    return sum(experiences) / len(experiences) if len(experiences) > 0 else scale.default_value()
+    return sum(experiences) / len(experiences) if len(experiences) > 0 else None

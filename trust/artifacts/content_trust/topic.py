@@ -27,7 +27,7 @@ def topic(agent, other_agent, trusted_topics, current_topics, recency_limit, log
     """
 
     if len(current_topics) == 0:
-        return scale.default_value()
+        return None
 
     topic_values = []
 
@@ -56,4 +56,4 @@ def topic(agent, other_agent, trusted_topics, current_topics, recency_limit, log
     if len(topic_values) > 0:
         return sum(topic_values) / len(topic_values)
     else:
-        return scale.default_value()
+        return None

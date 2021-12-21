@@ -17,4 +17,4 @@ def authority(agent_authorities, other_agent, scale):
     if other_agent in agent_authorities:        
         return scale.maximum_value()
     else:
-        return scale.default_value()
+        return None

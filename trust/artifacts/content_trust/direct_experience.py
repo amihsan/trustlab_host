@@ -27,7 +27,7 @@ def direct_experience(agent, resource_id, recency_limit, scale, logger):
     history = [float(entry['trust_value']) for entry in history_lines if entry['resource_id'] == resource_id and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit]
     # calculate direct experience
-    direct_xp = sum(history) / len(history) if len(history) > 0 else scale.default_value()
+    direct_xp = sum(history) / len(history) if len(history) > 0 else None
     return direct_xp
 
 
@@ -52,5 +52,5 @@ def get_combined_direct_experience_for_agent(agent, third_agent, logger, recency
     history = [float(entry['trust_value']) for entry in history_lines if entry['other_agent'] == third_agent and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit]
     # calculate direct experience
-    direct_xp = sum(history) / len(history) if len(history) > 0 else scale.default_value()
+    direct_xp = sum(history) / len(history) if len(history) > 0 else None
     return direct_xp

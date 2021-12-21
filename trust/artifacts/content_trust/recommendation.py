@@ -31,7 +31,7 @@ def recommendation(agent, other_agent, resource_id, scale, logger, discovery, re
                      get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) >=
                      scale.minimum_to_trust_others()]
     recommendations = ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit)
-    return statistics.median(recommendations) if len(recommendations) > 0 else scale.default_value()
+    return statistics.median(recommendations) if len(recommendations) > 0 else None
 
 
 def ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit):

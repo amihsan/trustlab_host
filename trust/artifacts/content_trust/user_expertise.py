@@ -53,4 +53,4 @@ def user_expertise(agent, other_agent, resource_id, topics, discovery, scale, lo
                     agents_to_ask.append(entry['other_agent'])
 
     expertise_values = ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit)
-    return statistics.median(expertise_values) if len(expertise_values) > 0 else scale.default_value()
+    return statistics.median(expertise_values) if len(expertise_values) > 0 else None
