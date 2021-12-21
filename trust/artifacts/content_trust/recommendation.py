@@ -60,13 +60,12 @@ def ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, di
     for third_agent in agents_to_ask:
         remote_ip, remote_port = discovery[third_agent].split(":")
         response = ask_other_agent(remote_ip, int(remote_port), message)
-        if response == 'None':
-            return []
-
-        received_value = float(response)
-        recommendations.append(
-            get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) * received_value
-        )
+        if response != 'None':
+            received_value = float(response)
+            recommendations.append(
+                get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) * received_value
+            )
+            
     return recommendations
 
 
