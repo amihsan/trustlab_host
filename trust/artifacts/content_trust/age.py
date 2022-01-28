@@ -2,9 +2,6 @@ import datetime
 from datetime import *
 from models import Scale, Observation
 
-###############################################################
-# Age checking
-
 
 def age_check(agent_behavior, observation, scale):
     """
@@ -20,13 +17,15 @@ def age_check(agent_behavior, observation, scale):
     """
 
     now = datetime.utcnow().timestamp()
-    age = observation.details['content_trust.publication_date'] + agent_behavior['content_trust.max_lifetime_seconds']
+    age = observation.details['content_trust.publication_date'] + \
+        agent_behavior['content_trust.max_lifetime_seconds']
 
     if now < age:  # within allowed lifetime
         return scale.maximum_value()
     else:  # exceeded lifetime
         if 'content_trust.age_grace_period_seconds' in agent_behavior:
-            grace_value = (now - age) / agent_behavior['content_trust.age_grace_period_seconds']
+            grace_value = (
+                now - age) / agent_behavior['content_trust.age_grace_period_seconds']
             if grace_value < 1.0:  # within grace period
                 return (1-grace_value) * scale.maximum_value()
 
