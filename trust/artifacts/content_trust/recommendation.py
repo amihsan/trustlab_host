@@ -1,3 +1,4 @@
+from dis import disco
 from exec.ask_others import ask_other_agent
 from trust.artifacts.content_trust.direct_experience import get_combined_direct_experience_for_agent, direct_experience
 from datetime import datetime
@@ -27,10 +28,17 @@ def recommendation(agent, other_agent, resource_id, scale, logger, discovery, re
     :return: The Recommendation trust value.
     :rtype: float or int
     """
-    agents_to_ask = [third_agent for third_agent in discovery if third_agent != agent and third_agent != other_agent and
-                     get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) >=
-                     scale.minimum_to_trust_others()]
-    recommendations = ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit)
+
+    agents_to_ask = []
+    for third_agent in discovery:
+        if third_agent != agent and third_agent != other_agent:
+            combined = get_combined_direct_experience_for_agent(
+                agent, third_agent, logger, recency_limit, scale)
+            if combined != None and combined >= scale.minimum_to_trust_others():
+                agents_to_ask.append(third_agent)
+
+    recommendations = ask_for_recommendations(
+        agent, resource_id, agents_to_ask, scale, logger, discovery, recency_limit)
     return statistics.median(recommendations) if len(recommendations) > 0 else None
 
 
@@ -62,10 +70,11 @@ def ask_for_recommendations(agent, resource_id, agents_to_ask, scale, logger, di
         response = ask_other_agent(remote_ip, int(remote_port), message)
         if response != 'None':
             received_value = float(response)
-            recommendations.append(
-                get_combined_direct_experience_for_agent(agent, third_agent, logger, recency_limit, scale) * received_value
-            )
-            
+            combined = get_combined_direct_experience_for_agent(
+                agent, third_agent, logger, recency_limit, scale)
+            if combined != None:
+                recommendations.append(combined * received_value)
+
     return recommendations
 
 

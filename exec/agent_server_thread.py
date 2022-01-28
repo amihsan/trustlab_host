@@ -24,13 +24,13 @@ class ServerThread(Thread):
                     trust_value = 0.0
                     if trust_operation == "recommendation":
                         resource_id = trust_protocol_message.split("_")[1]
-                        recency_str = trust_protocol_message.split("_")[2]
+                        recency_str = trust_protocol_message.split("_")[-1]
                         recency_limit = datetime.strptime(recency_str, BasicLogger.get_time_format_string())
                         trust_value = recommendation_response(self.agent, resource_id, recency_limit, self.scale,
                                                               self.logger)
                     elif trust_operation == "popularity":
                         resource_id = trust_protocol_message.split("_")[1]
-                        recency_str = trust_protocol_message.split("_")[2]
+                        recency_str = trust_protocol_message.split("_")[-1]
                         recency_limit = datetime.strptime(recency_str, BasicLogger.get_time_format_string())
                         trust_value = popularity_response(self.agent, resource_id, recency_limit, self.scale,
                                                           self.logger)
