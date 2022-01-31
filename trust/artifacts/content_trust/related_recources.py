@@ -23,6 +23,14 @@ def related(agent, related_resources, recency_limit, scale, logger):
     :rtype float or int
     """
 
-    experiences = [direct_experience(agent, resource_id, recency_limit, scale, logger) for resource_id in
-                   related_resources]
-    return sum(experiences) / len(experiences) if len(experiences) > 0 else None
+    experiences = []
+    
+    for resource_id in related_resources:
+        direct_xp = direct_experience(agent, resource_id, recency_limit, scale, logger)
+        if direct_xp != None:
+            experiences.append(direct_xp)
+    
+    if len(experiences) > 0:
+        return sum(experiences) / len(experiences)
+    else:
+        return None
