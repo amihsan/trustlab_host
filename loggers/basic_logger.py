@@ -218,7 +218,11 @@ class BasicLogger(ABC):
     @staticmethod
     def get_current_time():
         # %f is current microsecond
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        return datetime.now().strftime(BasicLogger.get_time_format_string())
+
+    @staticmethod
+    def get_time_format_string():
+        return '%Y-%m-%d %H:%M:%S:%f'
 
     def __init__(self, scenario_run_id, semaphore):
         self.scenario_run_id = scenario_run_id
