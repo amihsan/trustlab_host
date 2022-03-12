@@ -30,34 +30,37 @@ class Observation(UpdatableInterface):
     before = list
     sender = str
     receiver = str
-    author = str
+    authors = list
     topic = str
     message = str
+    details = dict
 
-    def __init__(self, observation_id, before, sender, receiver, author, topic, message):
+    def __init__(self, observation_id, before, sender, receiver, authors, message, details):
         """
         :type observation_id: int
         :type before: list
         :type sender: str
         :type receiver: str
-        :type author: str
-        :type topic: str
+        :type authors: list
         :type message: str
+        :type details: dict
         """
+
         self.observation_id = observation_id
         self.before = before
         self.sender = sender
         self.receiver = receiver
-        self.author = author
-        self.topic = topic
+        self.authors = authors
         self.message = message
-        super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, author=author,
-                         topic=topic, message=message)
+        self.details = details
+
+        super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, authors=authors,
+                         message=message, details=details)
 
     def __eq__(self, other):
         return self.observation_id == other.observation_id and self.before == other.before and \
-               self.sender == other.sender and self.receiver == other.receiver and self.author == other.author \
-               and self.topic == other.topic and self.message == other.message
+               self.sender == other.sender and self.receiver == other.receiver and self.authors == other.authors \
+               and self.message == other.message and self.details == other.details
 
 
 class Scale(ABC):
@@ -93,6 +96,33 @@ class Scale(ABC):
         """
         :return: represents the minimum value within this scale
         :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def cooperation_threshold(self):
+        """
+        :return: represents the cooperation threshold for the current scale
+        :rtype: float or int
+        """
+        pass
+
+    @abstractmethod
+    def set_cooperation_threshold(self, new_cooperation_threshold):
+        """
+        Changes the cooperation threshold for the current scale to the received value
+        """
+        pass
+
+    @abstractmethod
+    def normalize_value_to_scale(self, value, data_min, data_max):
+        """
+        Calculates a value that is normalized for the scale interval
+
+        :param value: The value that should be normalized
+        :param data_min: Smallest possible value for the given data
+        :param data_max: Largest possible value for the given data
+        :return: The normalized value
         """
         pass
 
