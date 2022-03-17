@@ -42,8 +42,8 @@ def user_expertise(agent, other_agent, resource_id, topics, discovery, scale, lo
         # pre-filter history_lines with the recency_limit
         for entry in [line for line in history_lines
                       if datetime.strptime(line['date_time'], BasicLogger.get_time_format_string()) > recency_limit]:
-            # get entries for the current resource based on its ID and filter by topic name
-            if entry['resource_id'] == resource_id and entry['topic'] == topic:
+            # filter by topic name
+            if entry['topic'] == topic:
                 # check whether the topic trust value is above the minimum to trust others as set by the scale and
                 # test if the agents_to_ask list already contains the agent of the current entry or is the current
                 # interaction partner
