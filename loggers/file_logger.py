@@ -111,14 +111,13 @@ class FileLogger(BasicLogger):
                 line_dict = {key: '' for key in groups}
                 for key in groups:
                     line_dict[key] = match.group(key)
-                lines.append(line_dict)
             elif not match and match_resource:
                 line_dict = {key: '' for key in groups_resource}
                 for key in groups_resource:
                     line_dict[key] = match_resource.group(key)
-                lines.append(line_dict)
             else:
                 raise ValueError(f"'{log_path}' included unmatchable line: {line}")
+            lines.append(line_dict)
         return lines
 
     def write_to_agent_history(self, agent, other_agent, history_value, resource_id=None):
