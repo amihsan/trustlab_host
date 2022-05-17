@@ -1,4 +1,5 @@
 import json
+import time
 from threading import Thread
 from trust.trust_evaluation import eval_trust
 from trust.init_trust import eval_trust_with_init
@@ -8,6 +9,7 @@ from trust.artifacts.content_trust.popularity import popularity_response
 from config import BUFFER_SIZE
 from datetime import datetime
 from loggers.basic_logger import BasicLogger
+from config import TIME_MEASURE
 
 
 class ServerThread(Thread):
@@ -42,15 +44,23 @@ class ServerThread(Thread):
                     if 'uri' in observation.details:
                         resource_id = observation.details['uri']
                     self.logger.write_to_agent_message_log(observation)
+                    trust_eval_time = None
+                    if TIME_MEASURE:
+                        trust_eval_start = time.time()
                     if '__init__' in self.agent_behavior:
                         trust_value = eval_trust_with_init(self.agent, observation.sender, observation.topic,
                                                            self.agent_behavior, self.scale, self.logger, self.discovery)
                     else:
                         trust_value = eval_trust(self.agent, observation.sender, observation, self.agent_behavior,
                                                  self.scale, self.logger, self.discovery)
+                    if TIME_MEASURE:
+                        trust_eval_end = time.time()
+                        # noinspection PyUnboundLocalVariable
+                        trust_eval_time = trust_eval_end - trust_eval_start
+                        print(f"Trust Evaluation took {trust_eval_time} s")
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value, resource_id)
-                    self.logger.write_to_trust_log(self.agent, observation.sender, trust_value, resource_id)
-
+                    self.logger.write_to_trust_log(self.agent, observation.sender, trust_value, resource_id,
+                                                   trust_eval_time)
                     # topic trust log is written within the trust evaluation
                     # self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value, resource_id)
 
