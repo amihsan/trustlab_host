@@ -96,9 +96,9 @@ class ChannelsConnector(BasicConnector):
         asyncio.get_event_loop().run_until_complete(self.register_at_director())
         asyncio.get_event_loop().run_until_complete(self.handler())
 
-    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict):
-        super().__init__(director_hostname, max_agents, send_queue, pipe_dict)
-        self.director_uri = "ws://" + self.director_hostname + "/supervisors/"
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, sec_conn):
+        super().__init__(director_hostname, max_agents, send_queue, pipe_dict, sec_conn)
+        self.director_uri = f"{'wss://' if sec_conn else 'ws://'}{self.director_hostname}/supervisors/"
         self.websocket = None
         self.chunked_parts = None
 
