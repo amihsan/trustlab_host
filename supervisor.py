@@ -3,7 +3,7 @@ import importlib
 import re
 import multiprocessing as multiproc
 import aioprocessing
-
+from distutils.util import strtobool
 from models import Scenario
 from scenario_run import ScenarioRun
 
@@ -65,7 +65,7 @@ class Supervisor:
                 self.scenario_runs[new_scenario_run_id] = new_scenario_run
                 new_scenario_run.start()
 
-    def __init__(self, ip_address, max_agents, director_hostname, connector, logger_str):
+    def __init__(self, ip_address, max_agents, director_hostname, connector, logger_str, sec_conn=False):
         self.ip_address = ip_address
         self.director_hostname = director_hostname
         self.max_agents = max_agents
@@ -85,7 +85,7 @@ class Supervisor:
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
-        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict)
+        self.connector = connector_class(director_hostname, max_agents, self.send_queue, self.pipe_dict, sec_conn)
 
 
 if __name__ == '__main__':
@@ -100,9 +100,11 @@ if __name__ == '__main__':
                         help="The logger class to use for logging trust values during a scenario run.")
     parser.add_argument("max_agents", type=int,
                         help="The maximal number of agents existing in parallel under this supervisor.")
+    parser.add_argument("-wss", "--sec-socket", type=lambda x: bool(strtobool(x)), nargs='?', const=True,
+                        default=False, help="Whether to use a secure websocket connection to the director.")
     args = parser.parse_args()
     # set multiprocessing start method
     multiproc.set_start_method('spawn')
     # init supervisor as class and execute
-    supervisor = Supervisor(args.address, args.max_agents, args.director, args.connector, args.logger)
+    supervisor = Supervisor(args.address, args.max_agents, args.director, args.connector, args.logger, args.sec_socket)
     supervisor.run()
