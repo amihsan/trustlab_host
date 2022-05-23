@@ -1,8 +1,8 @@
 import argparse
-import importlib
-import re
-import multiprocessing as multiproc
 import aioprocessing
+import importlib
+import multiprocessing as multiproc
+import re
 from distutils.util import strtobool
 from models import Scenario
 from scenario_run import ScenarioRun
