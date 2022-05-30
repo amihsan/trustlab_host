@@ -6,12 +6,38 @@ import re
 from distutils.util import strtobool
 
 
+SCENARIO_NAMES = {
+    'Basic Scenario': 3,
+    'Basic Authority Scenario': 3,
+    'Basic Topic Scenario': 3
+}
+
+
 class Evaluator:
     def run(self):
-        self.pool.map(self.evaluate, self.args.files)
-
-    def evaluate(self, file):
-        print(file)
+        self.connector.start()
+        for scenario, raps in SCENARIO_NAMES.items():
+            for i in range(0, raps):
+                print(f"Starting scenario '{scenario}' run {i+1}...")
+                run_message = {
+                    'type': 'run_scenario',
+                    'scenario': {'name': scenario},
+                    'is_evaluator': True
+                }
+                self.send_queue.put(run_message)
+                received_message = self.receive_pipe.recv()
+                if received_message['type'] == 'scenario_run_id':
+                    print(f"Got run id for '{scenario}' run {i+1}: {received_message['scenario_run_id']}")
+                else:
+                    raise RuntimeError(f"Did not receive scenario run ID after starting scenario '{scenario}' run {i+1}")
+                received_message = self.receive_pipe.recv()
+                if received_message['type'] == 'scenario_results':
+                    print(f"Scenario '{scenario}' run {i+1} finished as '{received_message['scenario_run_id']}' "
+                          f"executed under {received_message['supervisor_amount']} supervisors.\n\n")
+        exit_message = {
+            'type': 'end_socket'
+        }
+        self.send_queue.put(exit_message)
 
     def __init__(self, director_hostname, connector, logger_str, sec_conn=False):
         self.director_hostname = director_hostname
@@ -20,7 +46,7 @@ class Evaluator:
         self.send_queue = aioprocessing.AioQueue()
         self.manager = multiproc.Manager()
         self.pipe_dict = self.manager.dict()
-        self.receive_pipe, self.pipe_dict["supervisor"] = aioprocessing.AioPipe(False)
+        self.receive_pipe, self.pipe_dict["evaluator"] = aioprocessing.AioPipe(False)
         # get correct connector to director
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)

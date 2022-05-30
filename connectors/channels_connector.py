@@ -10,7 +10,14 @@ class ChannelsConnector(BasicConnector):
         print("Registering at Director...")
         await self.connect_web_socket()
         await self.set_max_agents()
-        print(f"Fully Registered a capacity of max. {self.max_agents} agents at Director")
+        print(f"Fully Registered a capacity of max. {self.max_agents} agents at Director.")
+
+    async def register_as_evaluator(self):
+        print('Registering as evaluator...')
+        await self.connect_web_socket()
+        await self.send_json({'type': 'register_eval_run'})
+        await self.receive_json()
+        print('Fully Registered at Director and locked WebUI.')
 
     async def connect_web_socket(self):
         connection_attempts = 0
@@ -39,7 +46,9 @@ class ChannelsConnector(BasicConnector):
         :param message: The complete received message as JSON object.
         :type message: dict or list
         """
-        if message["type"] == "scenario_registration":
+        if 'evaluator' in self.pipe_dict.keys():
+            await self.pipe_dict["evaluator"].coro_send(message)
+        elif message["type"] == "scenario_registration":
             await self.pipe_dict["supervisor"].coro_send(message)
         elif message["scenario_run_id"] in self.pipe_dict.keys() \
                 and not message["type"] == "scenario_registration":
@@ -62,7 +71,7 @@ class ChannelsConnector(BasicConnector):
         elif self.chunked_parts and message['part_number'][0] <= message['part_number'][1]:
             self.chunked_parts += message['part']
         else:
-            print('Supervisor received chunked transfer with unexpected status.')
+            print('ChannelsConnector received chunked transfer with unexpected status.')
             print(f'Chunked parts {"exist" if self.chunked_parts else "do NOT exist"} '
                   f'while message indicates part {message["part_number"]}.')
         await self.send_json({'type': 'chunked_transfer_ack', 'part_number': message['part_number']})
@@ -77,6 +86,8 @@ class ChannelsConnector(BasicConnector):
             message_json = json.loads(message)
             if message_json['type'] == 'chunked_transfer':
                 await self.consuming_chunked_transfer(message_json)
+            elif message_json['type'] == 'end_socket':
+                return
             else:
                 await self.consuming_message(message_json)
 
@@ -84,6 +95,8 @@ class ChannelsConnector(BasicConnector):
         while True:
             message = await self.send_queue.coro_get()
             await self.send_json(message)
+            if message['type'] == 'end_socket':
+                return
 
     async def handler(self):
         consumer_task = asyncio.ensure_future(self.consumer_handler())
@@ -93,12 +106,16 @@ class ChannelsConnector(BasicConnector):
             task.cancel()
 
     def run(self):
-        asyncio.get_event_loop().run_until_complete(self.register_at_director())
+        if self.max_agents > 0:
+            asyncio.get_event_loop().run_until_complete(self.register_at_director())
+        else:
+            asyncio.get_event_loop().run_until_complete(self.register_as_evaluator())
         asyncio.get_event_loop().run_until_complete(self.handler())
 
     def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, sec_conn):
         super().__init__(director_hostname, max_agents, send_queue, pipe_dict, sec_conn)
-        self.director_uri = f"{'wss://' if sec_conn else 'ws://'}{self.director_hostname}/supervisors/"
+        self.director_uri = f"{'wss://' if sec_conn else 'ws://'}{self.director_hostname}" \
+                            f"{'/lab/' if max_agents==0 else'/supervisors/'}"
         self.websocket = None
         self.chunked_parts = None
 
