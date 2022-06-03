@@ -48,7 +48,7 @@ class ServerThread(Thread):
                     if TIME_MEASURE:
                         trust_eval_start = time.time()
                     if '__init__' in self.agent_behavior:
-                        trust_value = eval_trust_with_init(self.agent, observation.sender, observation.topic,
+                        trust_value = eval_trust_with_init(self.agent, observation.sender, observation,
                                                            self.agent_behavior, self.scale, self.logger, self.discovery)
                     else:
                         trust_value = eval_trust(self.agent, observation.sender, observation, self.agent_behavior,
