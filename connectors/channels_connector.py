@@ -19,6 +19,11 @@ class ChannelsConnector(BasicConnector):
         await self.receive_json()
         print('Fully Registered at Director and locked WebUI.')
 
+    async def connect_to_director(self):
+        print("Connecting to Director...")
+        await self.connect_web_socket()
+        print("Connected to Director.")
+
     async def connect_web_socket(self):
         connection_attempts = 0
         while self.websocket is None:
@@ -106,18 +111,19 @@ class ChannelsConnector(BasicConnector):
             task.cancel()
 
     def run(self):
-        if self.max_agents > 0:
-            asyncio.get_event_loop().run_until_complete(self.register_at_director())
+        if self.no_registration:
+            asyncio.get_event_loop().run_until_complete(self.connect_to_director())
         else:
-            asyncio.get_event_loop().run_until_complete(self.register_as_evaluator())
+            if self.max_agents > 0:
+                asyncio.get_event_loop().run_until_complete(self.register_at_director())
+            else:
+                asyncio.get_event_loop().run_until_complete(self.register_as_evaluator())
         asyncio.get_event_loop().run_until_complete(self.handler())
 
-    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, sec_conn):
+    def __init__(self, director_hostname, max_agents, send_queue, pipe_dict, sec_conn, no_registration=False):
         super().__init__(director_hostname, max_agents, send_queue, pipe_dict, sec_conn)
         self.director_uri = f"{'wss://' if sec_conn else 'ws://'}{self.director_hostname}" \
                             f"{'/lab/' if max_agents==0 else'/supervisors/'}"
         self.websocket = None
         self.chunked_parts = None
-
-
-
+        self.no_registration = no_registration
