@@ -1,9 +1,11 @@
 import argparse
 import aioprocessing
 import importlib
+import json
 import multiprocessing as multiproc
 import re
 from distutils.util import strtobool
+from os.path import exists
 
 
 SCENARIO_NAMES = {
@@ -23,6 +25,7 @@ class Evaluator:
             self.send_queue.put({'type': 'unlock_webUI'})
             received_message = self.receive_pipe.recv()
         else:
+            scenario_run_ids = []
             for scenario, raps in SCENARIO_NAMES.items():
                 for i in range(0, raps):
                     print(f"Starting scenario '{scenario}' run {i+1}...")
@@ -42,15 +45,27 @@ class Evaluator:
                     if received_message['type'] == 'scenario_results':
                         print(f"Scenario '{scenario}' run {i+1} finished as '{received_message['scenario_run_id']}' "
                               f"executed under {received_message['supervisor_amount']} supervisors.\n\n")
+                        scenario_run_ids.append(received_message['scenario_run_id'])
+            if self.print_to_file:
+                json_path = 'log/evaluator_ids.json'
+                with open(json_path, 'r+' if exists(json_path) else 'w+') as json_file:
+                    try:
+                        data = json.load(json_file)
+                    except json.decoder.JSONDecodeError:
+                        data = []
+                    json_file.seek(0)
+                    data.extend(scenario_run_ids)
+                    print(json.dumps(data, indent=4), file=json_file)
         exit_message = {
             'type': 'end_socket'
         }
         self.send_queue.put(exit_message)
 
-    def __init__(self, director_hostname, connector, logger_str, sec_conn=False, lock_mode=''):
+    def __init__(self, director_hostname, connector, logger_str, sec_conn=False, lock_mode='', print_to_file=False):
         self.director_hostname = director_hostname
         self.logger_str = logger_str
         self.lock_mode = lock_mode
+        self.print_to_file = print_to_file
         # setup multiprocessing environment
         self.send_queue = aioprocessing.AioQueue()
         self.manager = multiproc.Manager()
@@ -75,9 +90,11 @@ if __name__ == '__main__':
                         default=False, help="Whether to use a secure websocket connection to the director.")
     parser.add_argument("-L", "--lock_mode", default="", choices=['lock', 'unlock'],
                         help="Changes the evaluator script to only lock or unlock the webUI.")
+    parser.add_argument("-p", "--print", type=lambda x: bool(strtobool(x)), nargs='?', const=True,
+                        default=False, help="Whether the scenario run IDs are printed to a file.")
     args = parser.parse_args()
     # set multiprocessing start method
     multiproc.set_start_method('spawn')
     # init supervisor as class and execute
-    evaluator = Evaluator(args.director, args.connector, args.logger, args.sec_socket, args.lock_mode)
+    evaluator = Evaluator(args.director, args.connector, args.logger, args.sec_socket, args.lock_mode, args.print)
     evaluator.run()
