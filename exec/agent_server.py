@@ -6,13 +6,11 @@ from .agent_server_thread import ServerThread
 
 class AgentServer(Thread):
     def run(self):
-        tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_server.bind((self.ip_address, self.port))
+        self.tcp_server.bind((self.ip_address, self.port))
         print(f"Agent '{self.agent}' listens on {self.ip_address}:{self.port}")
         while not self._stop_event.is_set():
-            tcp_server.listen(4)
-            (conn, (ip, port)) = tcp_server.accept()
+            self.tcp_server.listen(4)
+            (conn, (ip, port)) = self.tcp_server.accept()
             print(f"Connection established with: {ip}:{port}")
             new_thread = ServerThread(conn, self.agent, self.agent_behavior, self.scale, self.logger,
                                       self.observations_done, self.discovery)
@@ -27,6 +25,7 @@ class AgentServer(Thread):
         close_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         close_sock.connect((self.ip_address, self.port))
         close_sock.send(bytes("END", 'UTF-8'))
+        close_sock.shutdown(socket.SHUT_RDWR)
         close_sock.close()
 
     def set_discovery(self, discovery):
@@ -45,4 +44,11 @@ class AgentServer(Thread):
         self.observations_done = observations_done
         self._stop_event = Event()
         self.discovery = {}
+        self.tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def __del__(self):
+        # print("Closing server socket:", self.sock)
+        self.tcp_server.shutdown(socket.SHUT_RDWR)
+        self.tcp_server.close()
 

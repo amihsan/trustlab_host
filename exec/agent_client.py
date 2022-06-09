@@ -13,6 +13,7 @@ class AgentClient(Thread):
         # print("data sent at :"  + time.ctime(time.time()))
         receive_data = receive_data.decode('utf-8')
         print(receive_data)
+        tcp_client.shutdown(socket.SHUT_RDWR)
         tcp_client.close()
 
     def __init__(self, remote_ip, remote_port, message):
