@@ -82,7 +82,7 @@ class Evaluator:
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
         self.connector = connector_class(director_hostname, 0, self.send_queue, self.pipe_dict, sec_conn,
-                                         True if lock_mode else False)
+                                         no_registration=True if lock_mode else False)
 
 
 if __name__ == '__main__':
