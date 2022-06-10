@@ -53,7 +53,7 @@ class ScenarioRun(multiproc.Process):
         self.discovery = self.receive_pipe.recv()["discovery"]
         for thread in self.threads_server:
             thread.set_discovery(self.discovery)
-        print(self.discovery)
+        # print(self.discovery)
 
     def assert_scenario_start(self):
         """
@@ -87,6 +87,7 @@ class ScenarioRun(multiproc.Process):
             if observation_dict is not None:
                 observation = Observation(**observation_dict)
                 ip, port = self.discovery[observation.receiver].split(":")
+                print(f"Sending observation {observation.observation_id} to {ip}:{port}")
                 client_thread = AgentClient(ip, int(port), json.dumps(observation_dict))
                 self.threads_client.append(client_thread)
                 client_thread.start()
@@ -108,12 +109,12 @@ class ScenarioRun(multiproc.Process):
                 self.send_queue.put(done_message)
                 self.remove_observation_dependency([observation_done_dict["observation_id"]])
                 self.observations_done.remove(observation_done_dict)
-                print(f"Exec after exec observation: {self.observations_to_exec}")
+                # print(f"Exec after exec observation: {self.observations_to_exec}")
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
                 if message['type'] == 'observation_done':
                     self.remove_observation_dependency(message["observations_done"])
-                    print(f"Exec after done message: {self.observations_to_exec}")
+                    # print(f"Exec after done message: {self.observations_to_exec}")
                 if message['type'] == 'scenario_end':
                     for thread in self.threads_client:
                         if thread.is_alive():

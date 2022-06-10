@@ -11,8 +11,8 @@ class AgentServer(Thread):
         while not self._stop_event.is_set():
             self.tcp_server.listen(4)
             (conn, (ip, port)) = self.tcp_server.accept()
-            print(f"Connection established with: {ip}:{port}")
-            new_thread = ServerThread(conn, self.agent, self.agent_behavior, self.scale, self.logger,
+            # print(f"Connection established with: {ip}:{port}")
+            new_thread = ServerThread(conn, ip, port, self.agent, self.agent_behavior, self.scale, self.logger,
                                       self.observations_done, self.discovery)
             new_thread.start()
             self.threads.append(new_thread)
