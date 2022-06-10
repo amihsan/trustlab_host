@@ -23,6 +23,7 @@ class ServerThread(Thread):
                 elif decoded_msg.startswith("aTLAS_trust_protocol::"):
                     trust_protocol_head, trust_protocol_message = decoded_msg.split("::")
                     trust_operation = trust_protocol_message.split("_")[0]
+                    print(f"Received trust operation <{trust_operation}> from {self.remote_ip}:{self.remote_port}")
                     trust_value = 0.0
                     if trust_operation == "recommendation":
                         resource_id = trust_protocol_message.split("_")[1]
@@ -40,6 +41,7 @@ class ServerThread(Thread):
                     self.conn.send(bytes(trust_response, 'UTF-8'))
                 else:
                     observation = Observation(**json.loads(decoded_msg))
+                    print(f"Received observation {observation.observation_id} from {self.remote_ip}:{self.remote_port}")
                     resource_id = None
                     if 'uri' in observation.details:
                         resource_id = observation.details['uri']
@@ -57,13 +59,13 @@ class ServerThread(Thread):
                         trust_eval_end = time.time()
                         # noinspection PyUnboundLocalVariable
                         trust_eval_time = trust_eval_end - trust_eval_start
-                        print(f"Trust Evaluation took {trust_eval_time} s")
+                        # print(f"Trust Evaluation took {trust_eval_time} s")
                     self.logger.write_to_agent_history(self.agent, observation.sender, trust_value, resource_id)
                     self.logger.write_to_trust_log(self.agent, observation.sender, trust_value, resource_id,
                                                    trust_eval_time)
                     # topic trust log is written within the trust evaluation
-                    # self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic, trust_value, resource_id)
-
+                    # self.logger.write_to_agent_topic_trust(self.agent, observation.sender, observation.topic,
+                    #                                        trust_value, resource_id)
                     # TODO: how to work with trust decisions in general?
                     # if float(trust_value) < self.scenario.trust_thresholds['lower_limit']:
                     #     untrustedAgents.append(other_agent)
@@ -77,9 +79,11 @@ class ServerThread(Thread):
             pass
         return True
 
-    def __init__(self, conn, agent, agent_behavior, scale, logger, observations_done, discovery):
+    def __init__(self, conn, ip, port, agent, agent_behavior, scale, logger, observations_done, discovery):
         Thread.__init__(self)
         self.conn = conn
+        self.remote_ip = ip
+        self.remote_port = port
         self.agent = agent
         self.logger = logger
         self.agent_behavior = agent_behavior

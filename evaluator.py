@@ -4,6 +4,8 @@ import importlib
 import json
 import multiprocessing as multiproc
 import re
+from config import LOG_PATH
+from datetime import datetime
 from distutils.util import strtobool
 from os.path import exists
 
@@ -43,19 +45,24 @@ class Evaluator:
                                            f"run {i+1}")
                     received_message = self.receive_pipe.recv()
                     if received_message['type'] == 'scenario_results':
+                        receiving_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                         print(f"Scenario '{scenario}' run {i+1} finished as '{received_message['scenario_run_id']}' "
-                              f"executed under {received_message['supervisor_amount']} supervisors.\n\n")
-                        scenario_run_ids.append(received_message['scenario_run_id'])
-            if self.print_to_file:
-                json_path = 'log/evaluator_ids.json'
-                with open(json_path, 'r+' if exists(json_path) else 'w+') as json_file:
-                    try:
-                        data = json.load(json_file)
-                    except json.decoder.JSONDecodeError:
-                        data = []
-                    json_file.seek(0)
-                    data.extend(scenario_run_ids)
-                    print(json.dumps(data, indent=4), file=json_file)
+                              f"at {receiving_time} executed under {received_message['supervisor_amount']} "
+                              f"supervisors.\n\n")
+                        if self.print_to_file:
+                            json_path = LOG_PATH / 'evaluator_log.json'
+                            with open(json_path, 'r+' if exists(json_path) else 'w+') as json_file:
+                                try:
+                                    data = json.load(json_file)
+                                except json.decoder.JSONDecodeError:
+                                    data = {}
+                                json_file.seek(0)
+                                data[received_message['scenario_run_id']] = {
+                                    'datetime': receiving_time,
+                                    'scenario': scenario,
+                                    'run': i+1,
+                                    'supervisor_amount': received_message['supervisor_amount']}
+                                print(json.dumps(data, indent=4), file=json_file)
         exit_message = {
             'type': 'end_socket'
         }
@@ -75,7 +82,7 @@ class Evaluator:
         module = importlib.import_module("connectors." + re.sub("([A-Z])", "_\g<1>", connector).lower()[1:])
         connector_class = getattr(module, connector)
         self.connector = connector_class(director_hostname, 0, self.send_queue, self.pipe_dict, sec_conn,
-                                         True if lock_mode else False)
+                                         no_registration=True if lock_mode else False)
 
 
 if __name__ == '__main__':
@@ -91,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument("-L", "--lock_mode", default="", choices=['lock', 'unlock'],
                         help="Changes the evaluator script to only lock or unlock the webUI.")
     parser.add_argument("-p", "--print", type=lambda x: bool(strtobool(x)), nargs='?', const=True,
-                        default=False, help="Whether the scenario run IDs are printed to a file.")
+                        default=False, help="Whether the evaluator prints log information to a file.")
     args = parser.parse_args()
     # set multiprocessing start method
     multiproc.set_start_method('spawn')

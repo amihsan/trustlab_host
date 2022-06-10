@@ -23,6 +23,7 @@ def ask_other_agent(remote_ip, remote_port, message):
     tcp_client.send(bytes(request_message, 'UTF-8'))
     receive_data = tcp_client.recv(BUFFER_SIZE)
     receive_data = receive_data.decode('utf-8')
+    tcp_client.shutdown(socket.SHUT_RDWR)
     tcp_client.close()
     return receive_data.split("::")[2]
 
