@@ -26,7 +26,8 @@ class AgentServer(Thread):
         close_sock.connect((self.ip_address, self.port))
         close_sock.send(bytes("END", 'UTF-8'))
         close_sock.shutdown(socket.SHUT_RDWR)
-        close_sock.close()
+        # close_sock.close()
+        socket.close(close_sock.fileno())
 
     def set_discovery(self, discovery):
         self.discovery = discovery
@@ -50,5 +51,6 @@ class AgentServer(Thread):
     def __del__(self):
         # print("Closing server socket:", self.sock)
         self.tcp_server.shutdown(socket.SHUT_RDWR)
-        self.tcp_server.close()
+        # self.tcp_server.close()
+        socket.close(self.tcp_server.fileno())
 
