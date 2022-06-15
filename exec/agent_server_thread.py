@@ -1,4 +1,5 @@
 import json
+import socket
 import time
 from threading import Thread
 from trust.trust_evaluation import eval_trust
@@ -19,7 +20,7 @@ class ServerThread(Thread):
             if message != '':
                 decoded_msg = message.decode('utf-8')
                 if decoded_msg == "END":
-                    self.conn.close()
+                    pass
                 elif decoded_msg.startswith("aTLAS_trust_protocol::"):
                     trust_protocol_head, trust_protocol_message = decoded_msg.split("::")
                     trust_operation = trust_protocol_message.split("_")[0]
@@ -77,6 +78,7 @@ class ServerThread(Thread):
                     self.observations_done.append(observation.serialize())
         except BrokenPipeError:
             pass
+        socket.close(self.conn.fileno())
         return True
 
     def __init__(self, conn, ip, port, agent, agent_behavior, scale, logger, observations_done, discovery):
