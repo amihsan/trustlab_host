@@ -81,15 +81,16 @@ class FileLogger(BasicLogger):
         :type strip: bool
         :rtype: list
         """
-        try:
-            with open(log_path.absolute(), "r+") as log_file:
-                # strip deletes new line feeds, and filter deletes empty lines from list
-                log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
-            if len_filter and type(len_filter) is int:
-                log_lines = self.apply_len_filter(log_lines, len_filter)
-            return log_lines
-        except FileNotFoundError:
-            return []
+        with self.semaphore:
+            try:
+                with open(log_path.absolute(), "r") as log_file:
+                    # strip deletes new line feeds, and filter deletes empty lines from list
+                    log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
+                if len_filter and type(len_filter) is int:
+                    log_lines = self.apply_len_filter(log_lines, len_filter)
+                return log_lines
+            except FileNotFoundError:
+                return []
 
     def read_in_dicts(self, log_path, rex, rex_resource, groups, groups_resource, len_filter, rex_time=None,
                       rex_time_resource=None, groups_time=None, groups_time_resource=None):
