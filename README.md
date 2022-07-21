@@ -42,6 +42,7 @@
 This is the host library of the aTLAS testbed and thus a submodule of the [main repository][trustlab-repo].
 It includes the testbed environment, thus the supervisor and the web agents to be simulated.
 Further, it serves as a library to the web application and the director with certain [models](models.py).
+Additionally, it includes the `evaluator.py` which can be used to execute several scenarios in a sequence based on a CLI command.
 
 > More details are to be found as well at the [project page][atlas-project].
 
@@ -108,6 +109,21 @@ for a decentralized web has to be done manually with a high effort.
    ```bash
     python supervisors.py -h
     ```
+
+<details>
+<summary>Evaluator Script</summary>
+
+1. Ensure execution of [aTLAS][trustlab-repo] and some running supervisors.
+2. Start evaluator
+    ```bash
+    python evaluator.py
+    ```
+   For more specific preferences conduct the help of `evaluator.py`:
+   ```bash
+    python evaluator.py -h
+    ```
+
+</details>
 
 ## 👀 Insights
 
