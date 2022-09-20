@@ -32,15 +32,9 @@ class ScenarioRun(multiproc.Process):
         and `4)` receiving and saving the global discovery with all agents' addresses.
         """
         local_discovery = {}
-        # logging for all Agents their trust history values if given
-        for agent in self.scenario.agents:
-            self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
-            # topic no longer part of agent, but part of resource
-            #if self.scenario.agent_uses_metric(agent, 'content_trust.topic'):
-            #    self.logger.write_bulk_to_agent_topic_trust(agent, self.scenario.agents_with_metric(
-            #        'content_trust.topic')[agent])
         # creating servers
         for agent in self.agents_at_supervisor:
+            self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
             server = AgentServer(agent, self.ip_address, free_port, self.scenario.metrics_per_agent[agent],
