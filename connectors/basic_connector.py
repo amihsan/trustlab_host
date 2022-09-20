@@ -12,6 +12,10 @@ class BasicConnector(ABC, multiproc.Process):
         pass
 
     @abstractmethod
+    def get_scales_per_agent(self, agent_id):
+        pass
+
+    @abstractmethod
     def run(self):
         pass
 

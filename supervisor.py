@@ -42,6 +42,7 @@ class Supervisor:
                 print('Received Scenario Registration')
                 # TODO: check if enough agents are left and scenario can be really started
                 new_scenario_run_id = received_msg["scenario_run_id"]
+                scenario_name = received_msg["scenario_name"]
                 self.agents_in_use += len(received_msg["agents_at_supervisor"])
                 recv_end, send_end = aioprocessing.AioPipe(False)
                 self.pipe_dict[new_scenario_run_id] = send_end
@@ -59,8 +60,9 @@ class Supervisor:
                 observations_done = done_dict["list"]
                 self.observations_done[index_done]["used_by"] = new_scenario_run_id
                 # create and start scenario_run
-                new_scenario_run = ScenarioRun(new_scenario_run_id, received_msg["agents_at_supervisor"],
-                                               Scenario(**received_msg["scenario"]), self.ip_address, self.send_queue,
+                new_scenario_run = ScenarioRun(new_scenario_run_id, scenario_name, received_msg["agents_at_supervisor"],
+                                               #Scenario(**received_msg["scenario"]), self.ip_address, self.send_queue,
+                                               None, self.ip_address, self.send_queue,
                                                recv_end, logger, observations_done, self.pipe_dict["supervisor"])
                 self.scenario_runs[new_scenario_run_id] = new_scenario_run
                 new_scenario_run.start()

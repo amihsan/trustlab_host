@@ -138,7 +138,6 @@ class Scale(ABC):
         else:
             raise AttributeError("Scale requires minimum and maximum variable.")
 
-
 class Scenario(UpdatableInterface):
     """
     The Scenario class for the usage of the scenarios with its DSL files.

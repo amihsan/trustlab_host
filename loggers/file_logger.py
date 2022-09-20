@@ -161,7 +161,7 @@ class FileLogger(BasicLogger):
             with open(log_path.absolute(), "a+") as history_file:
                 if type(history) == list:
                     for entry in history:
-                        other_agent, resource_id, history_value = entry[0], entry[1], entry[2]
+                        other_agent, resource_id, history_value = entry['child'], entry['url'], entry['value']
                         write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
                                        f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
                         print(write_string, file=history_file)

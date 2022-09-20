@@ -39,6 +39,12 @@ class ChannelsConnector(BasicConnector):
         await self.send_json(register_max_agents)
         await self.receive_json()
 
+    async def get_scales_per_agent(self, agent_id):
+        register_max_agents = {"type": "get_scales_per_agent", "agent": agent_id}
+        register_max_agents.update(self.supervisor_info)
+        await self.send_json(register_max_agents)
+        return await self.receive_json()
+
     async def send_json(self, message):
         await self.websocket.send(json.dumps(message))
 
