@@ -23,7 +23,10 @@ def ask_other_agent(remote_ip, remote_port, message):
     tcp_client.send(bytes(request_message, 'UTF-8'))
     receive_data = tcp_client.recv(BUFFER_SIZE)
     receive_data = receive_data.decode('utf-8')
-    tcp_client.shutdown(socket.SHUT_RDWR)
+    try:
+        tcp_client.shutdown(socket.SHUT_RDWR)
+    except socket.error:
+        pass  # Ignore if the socket is already down
     # tcp_client.close()
     socket.close(tcp_client.fileno())
     return receive_data.split("::")[2]

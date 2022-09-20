@@ -96,6 +96,7 @@ for a decentralized web has to be done manually with a high effort.
     ```bash
     pipenv install
     ```
+   >For more information on pipenv, cf. [Pipenv: Python Dev Workflow for Humans][pipenv].
 
 ## 👟 Usage
 
@@ -159,6 +160,7 @@ The authors acknowledge the work of the following students:
 [atlas-project]: https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/
 [demo-extern]: https://vsr-www.informatik.tu-chemnitz.de/projects/2020/atlas/demo/
 [demo-intern]: https://vsr-dem0.informatik.tu-chemnitz.de/trustlab/
+[pipenv]: https://pipenv.pypa.io/en/latest/
 [trustlab-repo]: https://gitlab.hrz.tu-chemnitz.de/vsr/phd/siegert/trustlab
 [valentin-siegert-website]: https://vsr.informatik.tu-chemnitz.de/people/siegert
 [wta-paper]: https://vsr.informatik.tu-chemnitz.de/research/publications/2021/007/
