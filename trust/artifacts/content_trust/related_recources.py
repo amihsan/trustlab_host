@@ -22,14 +22,11 @@ def related(agent, related_resources, recency_limit, scale, logger):
     :return: The Related Resources trust value
     :rtype float or int
     """
-
     experiences = []
-    
     for resource_id in related_resources:
         direct_xp = direct_experience(agent, resource_id, recency_limit, scale, logger)
-        if direct_xp != None:
+        if direct_xp is not None:
             experiences.append(direct_xp)
-    
     if len(experiences) > 0:
         return sum(experiences) / len(experiences)
     else:
