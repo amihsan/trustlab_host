@@ -81,13 +81,16 @@ class FileLogger(BasicLogger):
         :type strip: bool
         :rtype: list
         """
+        print(log_path.absolute())
         with self.semaphore:
             try:
+                print("read start")
                 with open(log_path.absolute(), "r") as log_file:
                     # strip deletes new line feeds, and filter deletes empty lines from list
                     log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
                 if len_filter and type(len_filter) is int:
                     log_lines = self.apply_len_filter(log_lines, len_filter)
+                print("read stop")
                 return log_lines
             except FileNotFoundError:
                 return []
@@ -208,8 +211,10 @@ class FileLogger(BasicLogger):
                        f"{f' in resource <{resource_id}>' if resource_id else ''}" \
                        f"{f' taking {exec_time}s' if exec_time else ''}: {trust_value}"
         with self.semaphore:
+            print("write start")
             with open(log_path.absolute(), 'a+') as trust_log:
                 print(write_string, file=trust_log)
+            print("write stop")
 
     def write_to_agent_trust_log(self, agent, metric_str, other_agent, trust_value, resource_id=None):
         log_path = self.log_path / f"{agent}_trust_log.log"

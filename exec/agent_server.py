@@ -29,6 +29,15 @@ class AgentServer(Thread):
         # close_sock.close()
         socket.close(close_sock.fileno())
 
+    def set_agent_behavior(self, agent_behavior):
+        for thread in self.threads:
+            thread.set_agent_behavior(agent_behavior)
+
+    def get_agent_behavior(self):
+        for thread in self.threads:
+            if thread.get_agent_behavior():
+                return True
+
     def set_discovery(self, discovery):
         self.discovery = discovery
 

@@ -11,9 +11,7 @@ from os.path import exists
 
 
 SCENARIO_NAMES = {
-    'Basic Scenario': 3,
-    'Basic Authority Scenario': 3,
-    'Basic Topic Scenario': 3
+    'Random_1000A-1000O_74970': 1
 }
 
 

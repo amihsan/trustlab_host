@@ -1,6 +1,7 @@
 import json
 import socket
 import time
+import copy
 from threading import Thread
 from trust.trust_evaluation import eval_trust
 from trust.init_trust import eval_trust_with_init
@@ -47,6 +48,9 @@ class ServerThread(Thread):
                     if 'uri' in observation.details:
                         resource_id = observation.details['uri']
                     self.logger.write_to_agent_message_log(observation)
+                    self.waiting = self.agent_behavior is None
+                    while self.agent_behavior is None or self.get:
+                        time.sleep(0.1)
                     trust_eval_time = None
                     if TIME_MEASURE:
                         trust_eval_start = time.time()
@@ -76,10 +80,24 @@ class ServerThread(Thread):
                     # print("Node " + str(self.id) + " Server received data:", observation[2:-1])
                     self.conn.send(bytes('standard response', 'UTF-8'))
                     self.observations_done.append(observation.serialize())
+                    self.agent_behavior = None
         except BrokenPipeError:
             pass
         socket.close(self.conn.fileno())
         return True
+
+    def set_agent_behavior(self, agent_behavior):
+        if self.agent_behavior is None and self.waiting:
+            self.get = True
+            self.agent_behavior = copy.deepcopy(agent_behavior)
+            self.waiting = False
+            self.get_handled = False
+            self.get = False
+
+    def get_agent_behavior(self):
+        if self.agent_behavior is None and self.waiting and not self.get_handled:
+            self.get_handled = True
+            return True
 
     def __init__(self, conn, ip, port, agent, agent_behavior, scale, logger, observations_done, discovery):
         Thread.__init__(self)
@@ -88,7 +106,10 @@ class ServerThread(Thread):
         self.remote_port = port
         self.agent = agent
         self.logger = logger
-        self.agent_behavior = agent_behavior
+        self.agent_behavior = None
         self.scale = init_scale_object(scale)
         self.observations_done = observations_done
         self.discovery = discovery
+        self.waiting = False
+        self.get_handled = False
+        self.get = False
