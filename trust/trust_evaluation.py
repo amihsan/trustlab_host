@@ -7,6 +7,7 @@ from trust.artifacts.content_trust.provenance import provenance as content_trust
 from trust.artifacts.content_trust.age import age_check as content_trust_age
 from trust.artifacts.content_trust.related_recources import related as content_trust_related_resources
 from trust.artifacts.content_trust.user_expertise import user_expertise as content_trust_user_expertise
+from trust.artifacts.content_trust.resource_data import extract_resource_data as content_trust_extract_resource_data
 from trust.artifacts.final_trust import weighted_avg_final_trust
 from models import Scale, Observation
 from datetime import datetime
@@ -37,11 +38,17 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     trust_values = {}
     resource_id = observation.details['uri']
 
+    if any('content_trust' in s for s in observation.details):
+        resource_data = content_trust_extract_resource_data(observation)
+    else:
+        resource_data = {}
+
     # retrieve Recency age limit from agent trust preferences
     if 'content_trust.recency_age_limit' in agent_behavior:
         recency_limit = datetime.fromtimestamp(agent_behavior['content_trust.recency_age_limit'])
     else:
         # some Windows machines only can display UNIX timestamps from 86400 and not from 0
+        recency_limit = 0
         for timestamp in range(0, 100000000):
             try:
                 recency_limit = datetime.fromtimestamp(timestamp)
@@ -83,7 +90,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         trust_values['content_trust.deception'] = deception_value
 
     if 'content_trust.max_lifetime_seconds' in agent_behavior:
-        age_punishment_value = content_trust_age(agent_behavior, observation, scale)
+        age_punishment_value = content_trust_age(agent_behavior, resource_data['publication_date'], scale)
         logger.write_to_agent_trust_log(agent, 'content_trust.age', other_agent, age_punishment_value, resource_id)
         if 'content_trust.enforce_lifetime' in agent_behavior and agent_behavior['content_trust.enforce_lifetime']:
             if age_punishment_value < scale.maximum_value():
@@ -98,12 +105,12 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
 
     if 'content_trust.topic' in agent_behavior:
         topic_value = content_trust_topic(agent, other_agent, agent_behavior['content_trust.topic'],
-                                          observation.details['content_trust.topics'], recency_limit, logger, scale)
+                                          resource_data['topics'], recency_limit, logger, scale)
         logger.write_to_agent_trust_log(agent, 'content_trust.topic', other_agent, topic_value, resource_id)
         trust_values['content_trust.topic'] = topic_value
 
     if 'content_trust.provenance' in agent_behavior:
-        provenance_value = content_trust_provenance(observation.authors,
+        provenance_value = content_trust_provenance(resource_data['authors'],
                                                     agent_behavior['content_trust.provenance'], scale)
         logger.write_to_agent_trust_log(agent, 'content_trust.provenance', other_agent, provenance_value, resource_id)
         trust_values['content_trust.provenance'] = provenance_value
@@ -123,15 +130,14 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
 
     if 'content_trust.related_resources' in agent_behavior:
         related_resources_value = content_trust_related_resources(
-            agent, observation.details['content_trust.related_resources'], recency_limit, scale, logger)
+            agent, resource_data['related_resources'], recency_limit, scale, logger)
         logger.write_to_agent_trust_log(agent, 'content_trust.related_resources', other_agent, related_resources_value,
                                         resource_id)
         trust_values['content_trust.related_resources'] = related_resources_value
 
     if 'content_trust.user_expertise' in agent_behavior:
-        user_expertise_value = content_trust_user_expertise(
-            agent, other_agent, resource_id, observation.details['content_trust.topics'],
-            discovery, scale, logger, recency_limit)
+        user_expertise_value = content_trust_user_expertise(agent, other_agent, resource_id, resource_data['topics'],
+                                                            discovery, scale, logger, recency_limit)
         logger.write_to_agent_trust_log(agent, 'content_trust.user_expertise', other_agent, user_expertise_value,
                                         resource_id)
         trust_values['content_trust.user_expertise'] = user_expertise_value
@@ -141,9 +147,8 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
             peers = agent_behavior['content_trust.popularity']['peers']
         else:
             peers = discovery.keys()
-        popularity_value = content_trust_popularity(agent, other_agent, resource_id,
-                                                    peers, discovery,
-                                                    scale, recency_limit)
+        popularity_value = content_trust_popularity(agent, other_agent, resource_id, peers, discovery, scale,
+                                                    recency_limit)
         logger.write_to_agent_trust_log(agent, 'content_trust.popularity', other_agent, popularity_value, resource_id)
         trust_values['content_trust.popularity'] = popularity_value
 
@@ -157,7 +162,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         if agent_behavior['__final__']['name'] == 'weighted_average':
             final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'], None)
 
-    for topic in observation.details['content_trust.topics']:
+    for topic in resource_data['topics']:
         logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
 
     return final_trust_value

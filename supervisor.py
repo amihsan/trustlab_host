@@ -51,9 +51,7 @@ class Supervisor:
                                                            enumerate(self.logger_semaphores) if semaphore["used_by"] == "")
                 logger_semaphore = logger_semaphore_dict["semaphore"]
                 self.logger_semaphores[index_logger]["used_by"] = new_scenario_run_id
-                module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
-                logger_class = getattr(module, self.logger_str)
-                logger = logger_class(new_scenario_run_id, logger_semaphore)
+                logger = self.logger_class(new_scenario_run_id, logger_semaphore)
                 # taking one observations_done list
                 index_done, done_dict = next((index, obs_done_dict) for (index, obs_done_dict) in
                                              enumerate(self.observations_done) if obs_done_dict["used_by"] == "")
@@ -83,6 +81,9 @@ class Supervisor:
         self.receive_pipe, self.pipe_dict["supervisor"] = aioprocessing.AioPipe(False)
         # setup logger semaphores for all possible scenario runs
         self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
+        # import logger class only once
+        module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
+        self.logger_class = getattr(module, self.logger_str)
         # setup observations_done lists
         self.observations_done = [{"list": self.manager.list(), "used_by": ""} for i in range(max_agents)]
         # create supervisor info for connector
