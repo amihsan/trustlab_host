@@ -11,10 +11,18 @@ def extract_resource_data(observation):
     :rtype: dict
     """
     # TODO: extract data from observation message not only from observation details
-    resource_data = {
-        'authors': observation.authors,  # list of authors in string format
-        'publication_date': observation.details['content_trust.publication_date'],  # utcnow().timestamp() float
-        'related_resources': observation.details['content_trust.related_resources'],  # list of related resources
-        'topics': observation.details['content_trust.topics'],  # list of topics in string
-    }
+    # adding all resource data based on observation details if existing
+    resource_data = {}
+    if hasattr(observation, 'authors'):
+        resource_data['authors'] = observation.authors # list of authors in string format
+    if hasattr(observation, 'details'):
+        if 'content_trust.publication_date' in observation.details:
+            # utcnow().timestamp() float
+            resource_data['publication_date'] = observation.details['content_trust.publication_date']
+        if 'content_trust.related_resources' in observation.details:
+            # list of related resources
+            resource_data['related_resources'] = observation.details['content_trust.related_resources']
+        if 'content_trust.topics' in observation.details:
+            # list of topics in string format
+            resource_data['topics'] = observation.details['content_trust.topics']
     return resource_data
