@@ -8,6 +8,7 @@ from models import Observation
 from exec.agent_server import AgentServer
 from exec.agent_client import AgentClient
 import resource
+from config import METRICS_ON_INIT
 
 
 class ScenarioRun(multiproc.Process):
@@ -43,9 +44,7 @@ class ScenarioRun(multiproc.Process):
             t = time.localtime()
             current_time = time.strftime("%H:%M:%S", t)
             print("Analyze History for: " + str(agent) + " [" + current_time + "]" + " [" + str(i) + "]")
-            #self.logger.write_bulk_to_agent_history(agent, self.scenario.history[agent])
             history = self.communicationHelper.get_agent_history(agent)
-            #print(history)
             self.logger.write_bulk_to_agent_history(agent, history['data'])
             # topic no longer part of agent, but part of resource
             #if self.scenario.agent_uses_metric(agent, 'content_trust.topic'):
@@ -54,21 +53,19 @@ class ScenarioRun(multiproc.Process):
             i+=1
         # creating servers
         i = 0
-        print("Analyze Metrics and Scales for all Agents")
+        print("Analyze Scales for all Agents")
         for agent in self.agents_at_supervisor:
             t = time.localtime()
             current_time = time.strftime("%H:%M:%S", t)
-            print("Analyze Metrics and Scales for: " + str(agent) + " [" + current_time + "]" + " [" + str(i) + "]")
+            print("Analyze  Scales for: " + str(agent) + " [" + current_time + "]" + " [" + str(i) + "]")
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
-            #metrics = self.communicationHelper.get_agent_metrics(agent)
+            metrics = None
+            if METRICS_ON_INIT:
+                metrics = self.communicationHelper.get_agent_metrics(agent)
             scales = self.communicationHelper.get_agent_scales(agent)
-            #server = AgentServer(agent, self.ip_address, free_port, self.scenario.metrics_per_agent[agent],
-                                 #self.scenario.scales_per_agent[agent], self.logger, self.observations_done)
-            server = AgentServer(agent, self.ip_address, free_port, None,
+            server = AgentServer(agent, self.ip_address, free_port, metrics,
                                  scales['data'], self.logger, self.observations_done)
-            #print(metrics)
-            #print(scales)
             self.threads_server.append(server)
             server.start()
             i+=1
@@ -85,7 +82,6 @@ class ScenarioRun(multiproc.Process):
         self.discovery = message["discovery"]
         for thread in self.threads_server:
             thread.set_discovery(self.discovery)
-        # print(self.discovery)
         print("End Preparation")
         print(time.time())
 
@@ -98,24 +94,8 @@ class ScenarioRun(multiproc.Process):
         :rtype: None
         :raises AssertionError: Not all agents are discovered or the received message is not the start signal.
         """
-        print(1)
-        print(time.time())
-        #while True:
-        #    if self.receive_pipe.poll():
-        #        break
-
-        print(2)
-        print(time.time())
-        #start_confirmation = self.receive_pipe.recv()
-        #print(start_confirmation)
-        print(2)
         assert list(self.discovery.keys()) == agents  # all agents need to be discovered
-        print(3)
-        #assert start_confirmation["scenario_status"] == "started"
-        print(4)
         self.scenario_runs = True
-        print(5)
-        #print(agents)
 
     def run(self):
         """
@@ -141,7 +121,6 @@ class ScenarioRun(multiproc.Process):
                 if server.get_agent_behavior():
                     self.communicationHelper.send_get_agent_metrics(server.agent)
 
-            #observation_dict = next((obs for obs in self.observations_to_exec if len(obs["before"]) == 0), None)
             if observation_dict is not None:
                 observation = Observation(**observation_dict)
                 ip, port = self.discovery[observation.receiver].split(":")
@@ -149,15 +128,12 @@ class ScenarioRun(multiproc.Process):
                 client_thread = AgentClient(ip, int(port), json.dumps(observation_dict))
                 self.threads_client.append(client_thread)
                 client_thread.start()
-                #self.observations_to_exec.remove(observation_dict)
                 done_message = {
                     "type": "agent_free",
                     "scenario_run_id": self.scenario_run_id,
                     "scenario_name": self.scenario_name,
                     "agent": observation.sender
                 }
-                print("Agent Free")
-                print(done_message)
                 self.send_queue.put(done_message)
                 observation_dict = None
             observation_done_dict = next((obs for obs in self.observations_done), None)
@@ -175,12 +151,8 @@ class ScenarioRun(multiproc.Process):
                     "receiver_trust_log_dict": self.logger.read_lines_from_agent_trust_log(
                         observation_done_dict["receiver"]),
                 }
-                print("Send Observation Done")
-                print(done_message)
                 self.send_queue.put(done_message)
-                #self.remove_observation_dependency([observation_done_dict["observation_id"]])
                 self.observations_done.remove(observation_done_dict)
-                # print(f"Exec after exec observation: {self.observations_to_exec}")
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
                 if message['type'] == 'scenario_end':
@@ -219,7 +191,7 @@ class ScenarioRun(multiproc.Process):
         for observation in self.observations_to_exec:
             observation["before"] = [obs_id for obs_id in observation["before"] if obs_id not in observations_done]
 
-    def __init__(self, scenario_run_id, scenario_name, agents_at_supervisor, scenario, ip_address, send_queue, receive_pipe, logger,
+    def __init__(self, scenario_run_id, scenario_name, agents_at_supervisor, ip_address, send_queue, receive_pipe, logger,
                  observations_done, supervisor_pipe):
         multiproc.Process.__init__(self)
         self.scenario_run_id = scenario_run_id
@@ -231,14 +203,11 @@ class ScenarioRun(multiproc.Process):
         self.discovery = {}
         self.threads_server = []
         self.threads_client = []
-        #self.scenario = scenario
         self.logger = logger
         self.scenario_runs = False
         self.observations_done = observations_done
         self.supervisor_pipe = supervisor_pipe
         self.communicationHelper = CommunicationHelper(scenario_run_id, scenario_name, send_queue, receive_pipe)
-        # filter observations that have to start at this supervisor
-        #self.observations_to_exec = [obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor]
 class CommunicationHelper:
 
     def __init__(self, scenario_run_id, scenario_name, send_queue, receive_pipe):

@@ -17,6 +17,7 @@ WEBSOCKET_MAX = 900000  # tested this limit 990000 seems too large for superviso
 ATLAS_VERSION = "v 0.0.1"
 
 TIME_MEASURE = True
+METRICS_ON_INIT = False
 
 
 def create_chunked_transfer_id():
