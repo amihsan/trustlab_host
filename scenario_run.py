@@ -245,7 +245,7 @@ class CommunicationHelper:
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
                 if message['type'] == 'get_metrics_per_agent' and message['agent'] == agent:
-                    return message
+                    return message['data']
 
     def send_get_agent_metrics(self, agent):
         requestmessage = {
