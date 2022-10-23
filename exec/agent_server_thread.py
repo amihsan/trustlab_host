@@ -1,17 +1,16 @@
+import copy
 import json
 import socket
 import time
-import copy
+from config import TIME_MEASURE, BUFFER_SIZE, METRICS_ON_INIT
+from datetime import datetime
+from loggers.basic_logger import BasicLogger
+from models import Observation, init_scale_object
 from threading import Thread
 from trust.trust_evaluation import eval_trust
 from trust.init_trust import eval_trust_with_init
-from models import Observation, init_scale_object
 from trust.artifacts.content_trust.recommendation import recommendation_response
 from trust.artifacts.content_trust.popularity import popularity_response
-from config import BUFFER_SIZE, METRICS_ON_INIT
-from datetime import datetime
-from loggers.basic_logger import BasicLogger
-from config import TIME_MEASURE
 
 
 class ServerThread(Thread):
@@ -47,8 +46,8 @@ class ServerThread(Thread):
                     resource_id = None
                     if 'uri' in observation.details:
                         resource_id = observation.details['uri']
+                    self.logger.write_to_agent_message_log(observation)
                     if not METRICS_ON_INIT:
-                        self.logger.write_to_agent_message_log(observation)
                         self.waiting = self.agent_behavior is None
                         while self.agent_behavior is None or self.get:
                             None
@@ -96,7 +95,8 @@ class ServerThread(Thread):
             self.get_handled = False
             self.get = False
 
-    def get_agent_behavior(self):
+    def agent_behavior_required(self):
+        # TODO: what to return else?!
         if self.agent_behavior is None and self.waiting and not self.get_handled:
             self.get_handled = True
             return True

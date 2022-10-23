@@ -1,14 +1,12 @@
 import json
-import socket
-import time
-from contextlib import closing
 import multiprocessing as multiproc
-
+import resource
+import socket
+from config import METRICS_ON_INIT
+from contextlib import closing
 from models import Observation
 from exec.agent_server import AgentServer
 from exec.agent_client import AgentClient
-import resource
-from config import METRICS_ON_INIT
 
 
 class ScenarioRun(multiproc.Process):
@@ -29,7 +27,7 @@ class ScenarioRun(multiproc.Process):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             return s.getsockname()[1]
 
-    def prepare_scenario(self, all_agents):
+    def prepare_scenario(self):
         """
         Prepare the scenario run by `1)` logging for all agents their initial trust value logs,
         `2)` initializing all local agents' server(s), `3)` sending the local discovery to the director,
@@ -37,27 +35,11 @@ class ScenarioRun(multiproc.Process):
         """
         local_discovery = {}
         # logging for all Agents their trust history values if given
-        #for agent in self.scenario.agents:
-        i = 0
-        print("Analyze History for all Agents")
         for agent in self.agents_at_supervisor:
-            t = time.localtime()
-            current_time = time.strftime("%H:%M:%S", t)
-            print("Analyze History for: " + str(agent) + " [" + current_time + "]" + " [" + str(i) + "]")
             history = self.communicationHelper.get_agent_history(agent)
             self.logger.write_bulk_to_agent_history(agent, history['data'])
-            # topic no longer part of agent, but part of resource
-            #if self.scenario.agent_uses_metric(agent, 'content_trust.topic'):
-            #    self.logger.write_bulk_to_agent_topic_trust(agent, self.scenario.agents_with_metric(
-            #        'content_trust.topic')[agent])
-            i+=1
         # creating servers
-        i = 0
-        print("Analyze Scales for all Agents")
         for agent in self.agents_at_supervisor:
-            t = time.localtime()
-            current_time = time.strftime("%H:%M:%S", t)
-            print("Analyze  Scales for: " + str(agent) + " [" + current_time + "]" + " [" + str(i) + "]")
             free_port = self.find_free_port()
             local_discovery[agent] = self.ip_address + ":" + str(free_port)
             metrics = None
@@ -68,22 +50,13 @@ class ScenarioRun(multiproc.Process):
                                  scales['data'], self.logger, self.observations_done)
             self.threads_server.append(server)
             server.start()
-            i+=1
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
                              "discovery": local_discovery}
-        print("Send Discovery")
-        print(time.time())
         self.send_queue.put(discovery_message)
-        print("Send Discovery Done")
-        print(time.time())
         message = self.receive_pipe.recv()
-        print("Discovery message Reseived")
-        print(time.time())
         self.discovery = message["discovery"]
         for thread in self.threads_server:
             thread.set_discovery(self.discovery)
-        print("End Preparation")
-        print(time.time())
 
     def assert_scenario_start(self, agents):
         """
@@ -108,19 +81,16 @@ class ScenarioRun(multiproc.Process):
 
         :rtype: None
         """
-
         all_agents = []
-        for agentdefinition in self.communicationHelper.get_all_agents():
-           all_agents.append(agentdefinition['name'])
-
-        self.prepare_scenario(all_agents)
+        for agent_definition in self.communicationHelper.get_all_agents():
+            all_agents.append(agent_definition['name'])
+        self.prepare_scenario()
         self.assert_scenario_start(all_agents)
         observation_dict = None
         while self.scenario_runs:
             for server in self.threads_server:
-                if server.get_agent_behavior():
+                if server.agent_behavior_required():
                     self.communicationHelper.send_get_agent_metrics(server.agent)
-
             if observation_dict is not None:
                 observation = Observation(**observation_dict)
                 ip, port = self.discovery[observation.receiver].split(":")
@@ -173,7 +143,6 @@ class ScenarioRun(multiproc.Process):
                         if server.agent == agent:
                             server.set_agent_behavior(message['data'])
                     del message['data']
-
         end_message = {
             'type': 'scenario_end',
             'scenario_run_id': self.scenario_run_id
@@ -208,8 +177,9 @@ class ScenarioRun(multiproc.Process):
         self.observations_done = observations_done
         self.supervisor_pipe = supervisor_pipe
         self.communicationHelper = CommunicationHelper(scenario_run_id, scenario_name, send_queue, receive_pipe)
-class CommunicationHelper:
 
+
+class CommunicationHelper:
     def __init__(self, scenario_run_id, scenario_name, send_queue, receive_pipe):
         self.send_queue = send_queue
         self.receive_pipe = receive_pipe
@@ -218,13 +188,12 @@ class CommunicationHelper:
 
     def get_all_agents(self):
         request = True
-        requestmessage = {
+        request_message = {
             "type": "get_all_agents",
             "scenario_run_id": self.scenario_run_id,
             "scenario_name": self.scenario_name
         }
-        self.send_queue.put(requestmessage)
-
+        self.send_queue.put(request_message)
         while request:
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
@@ -233,14 +202,13 @@ class CommunicationHelper:
 
     def get_agent_metrics(self, agent):
         request = True
-        requestmessage = {
+        request_message = {
             "type": "get_metrics_per_agent",
             "scenario_run_id": self.scenario_run_id,
             "scenario_name": self.scenario_name,
             "agent": agent
         }
-        self.send_queue.put(requestmessage)
-
+        self.send_queue.put(request_message)
         while request:
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
@@ -248,24 +216,23 @@ class CommunicationHelper:
                     return message['data']
 
     def send_get_agent_metrics(self, agent):
-        requestmessage = {
+        request_message = {
             "type": "get_metrics_per_agent",
             "scenario_run_id": self.scenario_run_id,
             "scenario_name": self.scenario_name,
             "agent": agent
         }
-        self.send_queue.put(requestmessage)
+        self.send_queue.put(request_message)
 
     def get_agent_scales(self, agent):
         request = True
-        requestmessage = {
+        request_message = {
             "type": "get_scales_per_agent",
             "scenario_name": self.scenario_name,
             "scenario_run_id": self.scenario_run_id,
             "agent": agent
         }
-        self.send_queue.put(requestmessage)
-
+        self.send_queue.put(request_message)
         while request:
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
@@ -274,14 +241,13 @@ class CommunicationHelper:
 
     def get_agent_history(self, agent):
         request = True
-        requestmessage = {
+        request_message = {
             "type": "get_history_per_agent",
             "scenario_name": self.scenario_name,
             "scenario_run_id": self.scenario_run_id,
             "agent": agent
         }
-        self.send_queue.put(requestmessage)
-
+        self.send_queue.put(request_message)
         while request:
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()

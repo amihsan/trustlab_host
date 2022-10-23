@@ -1,6 +1,5 @@
 import socket
 from threading import Thread, Event
-
 from .agent_server_thread import ServerThread
 
 
@@ -33,9 +32,9 @@ class AgentServer(Thread):
         for thread in self.threads:
             thread.set_agent_behavior(agent_behavior)
 
-    def get_agent_behavior(self):
+    def agent_behavior_required(self):
         for thread in self.threads:
-            if thread.get_agent_behavior():
+            if thread.agent_behavior_required():
                 return True
 
     def set_discovery(self, discovery):

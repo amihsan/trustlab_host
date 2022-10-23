@@ -45,7 +45,6 @@ class Observation(UpdatableInterface):
         :type message: str
         :type details: dict
         """
-
         self.observation_id = observation_id
         self.before = before
         self.sender = sender
@@ -53,7 +52,6 @@ class Observation(UpdatableInterface):
         self.authors = authors
         self.message = message
         self.details = details
-
         super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, authors=authors,
                          message=message, details=details)
 
@@ -137,6 +135,7 @@ class Scale(ABC):
                                 "Requires to be int and int, or float and float.")
         else:
             raise AttributeError("Scale requires minimum and maximum variable.")
+
 
 class Scenario(UpdatableInterface):
     """
@@ -368,36 +367,34 @@ def load_scale_spec(scale_dict):
     scales_path = Path(Path(__file__).parent.absolute()) / "scales"
     module_name = vars(sys.modules[__name__])['__package__']
     cls = None
-    while True:
-        try:
-            scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
-                        and file.endswith("_scale.py")]
-            for file_name in scale_file_names:
-                file_package = file_name.split(".")[0]
-                # python module path
-                if module_name != '':
-                    import_module = f".scales.{file_package}"
-                else:
-                    import_module = f"scales.{file_package}"
-                # ensure package is accessible
-                implementation_spec = importlib.util.find_spec(import_module, module_name)
-                if file_package == scale_dict['package'] and implementation_spec is not None:
-                    # check if module was imported during runtime to decide if reload is required
-                    scale_spec = importlib.util.find_spec(import_module, module_name)
-                    # import scale config to variable
-                    scale_module = importlib.import_module(import_module, module_name)
-                    # only reload module after importing if spec was found before
-                    if scale_spec is not None:
-                        scale_module = importlib.reload(scale_module)
-                    # class name requires to be file name in CamelCase
-                    class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
-                    if hasattr(scale_module, class_name):
-                        cls = getattr(scale_module, class_name)
-                        if not issubclass(cls, Scale) or not issubclass(cls, UpdatableInterface):
-                            raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
-            break
-        except OSError:
-            None
+    try:
+        scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
+                            and file.endswith("_scale.py")]
+        for file_name in scale_file_names:
+            file_package = file_name.split(".")[0]
+            # python module path
+            if module_name != '':
+                import_module = f".scales.{file_package}"
+            else:
+                import_module = f"scales.{file_package}"
+            # ensure package is accessible
+            implementation_spec = importlib.util.find_spec(import_module, module_name)
+            if file_package == scale_dict['package'] and implementation_spec is not None:
+                # check if module was imported during runtime to decide if reload is required
+                scale_spec = importlib.util.find_spec(import_module, module_name)
+                # import scale config to variable
+                scale_module = importlib.import_module(import_module, module_name)
+                # only reload module after importing if spec was found before
+                if scale_spec is not None:
+                    scale_module = importlib.reload(scale_module)
+                # class name requires to be file name in CamelCase
+                class_name = ''.join([name_part.capitalize() for name_part in file_package.split("_")])
+                if hasattr(scale_module, class_name):
+                    cls = getattr(scale_module, class_name)
+                    if not issubclass(cls, Scale) or not issubclass(cls, UpdatableInterface):
+                        raise SyntaxError("Scale implementation is not subclass of Scale and UpdatableInterface.")
+    except OSError:
+        pass
     if cls is None:
         raise ModuleNotFoundError(f"Scale with package '{scale_dict['package']}' was not found.")
     return cls
@@ -417,5 +414,5 @@ def init_scale_object(scale_dict):
     """
     cls = load_scale_spec(scale_dict)
     scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
-    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
+    scale_object = cls(**scale_kwargs)  # might raise TypeError by class specification
     return scale_object

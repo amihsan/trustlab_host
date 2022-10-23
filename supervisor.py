@@ -59,8 +59,8 @@ class Supervisor:
                 self.observations_done[index_done]["used_by"] = new_scenario_run_id
                 # create and start scenario_run
                 new_scenario_run = ScenarioRun(new_scenario_run_id, scenario_name, received_msg["agents_at_supervisor"],
-                                               self.ip_address, self.send_queue,
-                                               recv_end, logger, observations_done, self.pipe_dict["supervisor"])
+                                               self.ip_address, self.send_queue, recv_end, logger, observations_done,
+                                               self.pipe_dict["supervisor"])
                 self.scenario_runs[new_scenario_run_id] = new_scenario_run
                 new_scenario_run.start()
 
@@ -79,7 +79,7 @@ class Supervisor:
         self.pipe_dict = self.manager.dict()
         self.receive_pipe, self.pipe_dict["supervisor"] = aioprocessing.AioPipe(False)
         # setup logger semaphores for all possible scenario runs
-        self.logger_semaphores = [{"semaphore": self.manager.Lock(), "used_by": ""} for i in range(max_agents)]
+        self.logger_semaphores = [{"semaphore": self.manager.Semaphore(1), "used_by": ""} for i in range(max_agents)]
         # import logger class only once
         module = importlib.import_module("loggers." + re.sub("([A-Z])", "_\g<1>", self.logger_str).lower()[1:])
         self.logger_class = getattr(module, self.logger_str)

@@ -11,10 +11,9 @@ from os.path import exists
 
 
 SCENARIO_NAMES = {
-    #'Random_100A-100O_208828': 1,
-    #'Random_1000A-1000O_218857': 1,
-    #'Random_1400A-1400O_781559': 1,
-    'Random_100A-100O_862326': 1
+    'Basic Scenario': 3,
+    'Basic Authority Scenario': 3,
+    'Basic Topic Scenario': 3
 }
 
 
