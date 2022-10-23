@@ -21,7 +21,6 @@ class ScenarioRun(multiproc.Process):
 
         :return: Free port number.
         """
-        resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
             s.bind(('', 0))
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
