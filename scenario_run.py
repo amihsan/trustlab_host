@@ -1,6 +1,6 @@
 import json
 import multiprocessing as multiproc
-import resource
+# import resource
 import socket
 from config import METRICS_ON_INIT
 from contextlib import closing
@@ -21,7 +21,7 @@ class ScenarioRun(multiproc.Process):
 
         :return: Free port number.
         """
-        resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+        # resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
             s.bind(('', 0))
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
