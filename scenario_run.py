@@ -1,11 +1,13 @@
 import json
-import socket
-from contextlib import closing
 import multiprocessing as multiproc
-
-from models import Observation
+import os
+import socket
+from config import TRACK_RAM
+from contextlib import closing
 from exec.agent_server import AgentServer
 from exec.agent_client import AgentClient
+from models import Observation
+from tracker.ram_tracker import RamTracker
 
 
 class ScenarioRun(multiproc.Process):
@@ -74,6 +76,9 @@ class ScenarioRun(multiproc.Process):
 
         :rtype: None
         """
+        if self.ram_tracker:
+            self.ram_tracker = RamTracker(os.getpid())
+            self.ram_tracker.start()
         self.prepare_scenario()
         self.assert_scenario_start()
         while self.scenario_runs:
@@ -110,6 +115,12 @@ class ScenarioRun(multiproc.Process):
                     self.remove_observation_dependency(message["observations_done"])
                     # print(f"Exec after done message: {self.observations_to_exec}")
                 if message['type'] == 'scenario_end':
+                    if self.ram_tracker:
+                        self.ram_tracker.track = False
+                        self.send_queue.put({"type": "ram_usage", "scenario_run_id": self.scenario_run_id,
+                                             "ram_usage": self.ram_tracker.ram_usage})
+                        if self.ram_tracker.is_alive():
+                            self.ram_tracker.join()
                     for thread in self.threads_client:
                         if thread.is_alive():
                             thread.join()
@@ -153,3 +164,4 @@ class ScenarioRun(multiproc.Process):
         self.supervisor_pipe = supervisor_pipe
         # filter observations that have to start at this supervisor
         self.observations_to_exec = [obs for obs in scenario.observations if obs["sender"] in agents_at_supervisor]
+        self.ram_tracker = TRACK_RAM
