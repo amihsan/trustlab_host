@@ -16,10 +16,8 @@ def provenance(authors, trusted_authors, scale):
     :return: The provenance trust value
     :rtype: float or int
     """
-
     if len(authors) == 0:
         return None
-
     count_congruent = len(set(authors) & set(trusted_authors))
     score = count_congruent / len(authors)
     return scale.normalize_value_to_scale(score, 0, 1)
