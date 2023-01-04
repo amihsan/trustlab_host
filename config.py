@@ -16,8 +16,13 @@ WEBSOCKET_MAX = 900000  # tested this limit 990000 seems too large for superviso
 # aTLAS Version for check at supervisor <-> director connection
 ATLAS_VERSION = "v 0.0.1"
 
+# whether to measure the time for each message
 TIME_MEASURE = True
 METRICS_ON_INIT = False
+
+# Enabling and configuring ram logging
+TRACK_RAM = True
+RAM_TRACKING_INTERVAL = 1  # in seconds
 
 
 def create_chunked_transfer_id():

@@ -1,12 +1,14 @@
 import json
 import multiprocessing as multiproc
+import os
 # import resource
 import socket
-from config import METRICS_ON_INIT
+from config import METRICS_ON_INIT, TRACK_RAM
 from contextlib import closing
-from models import Observation
 from exec.agent_server import AgentServer
 from exec.agent_client import AgentClient
+from models import Observation
+from tracker.ram_tracker import RamTracker
 
 
 class ScenarioRun(multiproc.Process):
@@ -53,8 +55,7 @@ class ScenarioRun(multiproc.Process):
         discovery_message = {"type": "agent_discovery", "scenario_run_id": self.scenario_run_id,
                              "discovery": local_discovery}
         self.send_queue.put(discovery_message)
-        message = self.receive_pipe.recv()
-        self.discovery = message["discovery"]
+        self.discovery = self.receive_pipe.recv()["discovery"]
         for thread in self.threads_server:
             thread.set_discovery(self.discovery)
 
@@ -67,6 +68,10 @@ class ScenarioRun(multiproc.Process):
         :rtype: None
         :raises AssertionError: Not all agents are discovered or the received message is not the start signal.
         """
+        # older code asserts | TODO: delete old code if message not required
+        # start_confirmation = self.receive_pipe.recv()
+        # assert list(self.discovery.keys()) == self.scenario.agents  # all agents need to be discovered
+        # assert start_confirmation["scenario_status"] == "started"
         assert list(self.discovery.keys()) == agents  # all agents need to be discovered
         self.scenario_runs = True
 
@@ -81,6 +86,9 @@ class ScenarioRun(multiproc.Process):
 
         :rtype: None
         """
+        if self.ram_tracker:
+            self.ram_tracker = RamTracker(os.getpid())
+            self.ram_tracker.start()
         all_agents = []
         for agent_definition in self.communicationHelper.get_all_agents():
             all_agents.append(agent_definition['name'])
@@ -126,6 +134,12 @@ class ScenarioRun(multiproc.Process):
             if self.receive_pipe.poll():
                 message = self.receive_pipe.recv()
                 if message['type'] == 'scenario_end':
+                    if self.ram_tracker:
+                        self.ram_tracker.track = False
+                        self.send_queue.put({"type": "ram_usage", "scenario_run_id": self.scenario_run_id,
+                                             "ram_usage": self.ram_tracker.ram_usage})
+                        if self.ram_tracker.is_alive():
+                            self.ram_tracker.join()
                     for thread in self.threads_client:
                         if thread.is_alive():
                             thread.join()
@@ -149,17 +163,6 @@ class ScenarioRun(multiproc.Process):
         }
         self.supervisor_pipe.send(end_message)
 
-    def remove_observation_dependency(self, observations_done):
-        """
-        Removes any observations given from all `observations_to_exec`'s `before` dependencies.
-
-        :param observations_done: All observation ids to be removed from the `before` dependency.
-        :type observations_done: list
-        :rtype: None
-        """
-        for observation in self.observations_to_exec:
-            observation["before"] = [obs_id for obs_id in observation["before"] if obs_id not in observations_done]
-
     def __init__(self, scenario_run_id, scenario_name, agents_at_supervisor, ip_address, send_queue, receive_pipe, logger,
                  observations_done, supervisor_pipe):
         multiproc.Process.__init__(self)
@@ -176,6 +179,8 @@ class ScenarioRun(multiproc.Process):
         self.scenario_runs = False
         self.observations_done = observations_done
         self.supervisor_pipe = supervisor_pipe
+        self.ram_tracker = TRACK_RAM
+        # Communication Helper
         self.communicationHelper = CommunicationHelper(scenario_run_id, scenario_name, send_queue, receive_pipe)
 
 
