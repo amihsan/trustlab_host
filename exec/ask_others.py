@@ -17,8 +17,10 @@ def ask_other_agent(remote_ip, remote_port, message):
     """
 
     request_message = f"aTLAS_trust_protocol::{message}"
-    tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_client.connect((remote_ip, remote_port))
+    # older version of socket creation
+    # tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # tcp_client.connect((remote_ip, remote_port))
+    tcp_client = socket.create_connection((remote_ip, remote_port))
     # send message
     tcp_client.send(bytes(request_message, 'UTF-8'))
     receive_data = tcp_client.recv(BUFFER_SIZE)
