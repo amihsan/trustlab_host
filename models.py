@@ -368,9 +368,14 @@ def load_scale_spec(scale_dict):
     """
     scales_path = Path(Path(__file__).parent.absolute()) / "scales"
     module_name = vars(sys.modules[__name__])['__package__']
-    cls = None
-    scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
-                        and file.endswith("_scale.py")]
+    cls, scanned_scales, scale_file_names = None, False, []
+    while not scanned_scales:
+        try:
+            scale_file_names = [file for file in listdir(scales_path) if isfile(scales_path / file)
+                                and file.endswith("_scale.py")]
+            scanned_scales = True
+        except OSError:
+            pass
     for file_name in scale_file_names:
         file_package = file_name.split(".")[0]
         # python module path
