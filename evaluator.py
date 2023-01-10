@@ -34,7 +34,8 @@ class Evaluator:
                     run_message = {
                         'type': 'run_scenario',
                         'scenario': {'name': scenario},
-                        'is_evaluator': True
+                        'is_evaluator': True,
+                        'scenario_name': scenario
                     }
                     self.send_queue.put(run_message)
                     received_message = self.receive_pipe.recv()

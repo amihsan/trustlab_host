@@ -1,16 +1,16 @@
+import copy
 import json
 import socket
 import time
+from config import TIME_MEASURE, BUFFER_SIZE, METRICS_ON_INIT
+from datetime import datetime
+from loggers.basic_logger import BasicLogger
+from models import Observation, init_scale_object
 from threading import Thread
 from trust.trust_evaluation import eval_trust
 from trust.init_trust import eval_trust_with_init
-from models import Observation, init_scale_object
 from trust.artifacts.content_trust.recommendation import recommendation_response
 from trust.artifacts.content_trust.popularity import popularity_response
-from config import BUFFER_SIZE
-from datetime import datetime
-from loggers.basic_logger import BasicLogger
-from config import TIME_MEASURE
 
 
 class ServerThread(Thread):
@@ -47,6 +47,10 @@ class ServerThread(Thread):
                     if 'uri' in observation.details:
                         resource_id = observation.details['uri']
                     self.logger.write_to_agent_message_log(observation)
+                    if not METRICS_ON_INIT:
+                        self.waiting = self.agent_behavior is None
+                        while self.agent_behavior is None or self.get:
+                            None
                     trust_eval_time = None
                     if TIME_MEASURE:
                         trust_eval_start = time.time()
@@ -76,10 +80,26 @@ class ServerThread(Thread):
                     # print("Node " + str(self.id) + " Server received data:", observation[2:-1])
                     self.conn.send(bytes('standard response', 'UTF-8'))
                     self.observations_done.append(observation.serialize())
+                    if not METRICS_ON_INIT:
+                        self.agent_behavior = None
         except BrokenPipeError:
             pass
         socket.close(self.conn.fileno())
         return True
+
+    def set_agent_behavior(self, agent_behavior):
+        if self.agent_behavior is None and self.waiting:
+            self.get = True
+            self.agent_behavior = copy.deepcopy(agent_behavior)
+            self.waiting = False
+            self.get_handled = False
+            self.get = False
+
+    def agent_behavior_required(self):
+        # TODO: what to return else?!
+        if self.agent_behavior is None and self.waiting and not self.get_handled:
+            self.get_handled = True
+            return True
 
     def __init__(self, conn, ip, port, agent, agent_behavior, scale, logger, observations_done, discovery):
         Thread.__init__(self)
@@ -88,7 +108,12 @@ class ServerThread(Thread):
         self.remote_port = port
         self.agent = agent
         self.logger = logger
-        self.agent_behavior = agent_behavior
         self.scale = init_scale_object(scale)
         self.observations_done = observations_done
         self.discovery = discovery
+        self.waiting = False
+        self.get_handled = False
+        self.get = False
+        self.agent_behavior = None
+        if METRICS_ON_INIT:
+            self.agent_behavior = agent_behavior
