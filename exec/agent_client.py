@@ -5,8 +5,10 @@ from config import BUFFER_SIZE
 
 class AgentClient(Thread):
     def run(self):
-        tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_client.connect((self.remote_ip, self.remote_port))
+        # older version of socket creation
+        # tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # tcp_client.connect((self.remote_ip, self.remote_port))
+        tcp_client = socket.create_connection((self.remote_ip, self.remote_port))
         # send message
         tcp_client.send(bytes(self.message, 'UTF-8'))
         receive_data = tcp_client.recv(BUFFER_SIZE)
