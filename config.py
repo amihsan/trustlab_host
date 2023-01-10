@@ -18,6 +18,7 @@ ATLAS_VERSION = "v 0.0.1"
 
 # whether to measure the time for each message
 TIME_MEASURE = True
+METRICS_ON_INIT = False
 
 # Enabling and configuring ram logging
 TRACK_RAM = True

@@ -1,6 +1,5 @@
 import socket
 from threading import Thread, Event
-
 from .agent_server_thread import ServerThread
 
 
@@ -28,6 +27,15 @@ class AgentServer(Thread):
         close_sock.shutdown(socket.SHUT_RDWR)
         # close_sock.close()
         socket.close(close_sock.fileno())
+
+    def set_agent_behavior(self, agent_behavior):
+        for thread in self.threads:
+            thread.set_agent_behavior(agent_behavior)
+
+    def agent_behavior_required(self):
+        for thread in self.threads:
+            if thread.agent_behavior_required():
+                return True
 
     def set_discovery(self, discovery):
         self.discovery = discovery

@@ -45,7 +45,6 @@ class Observation(UpdatableInterface):
         :type message: str
         :type details: dict
         """
-
         self.observation_id = observation_id
         self.before = before
         self.sender = sender
@@ -53,7 +52,6 @@ class Observation(UpdatableInterface):
         self.authors = authors
         self.message = message
         self.details = details
-
         super().__init__(observation_id=observation_id, before=before, sender=sender, receiver=receiver, authors=authors,
                          message=message, details=details)
 
@@ -418,5 +416,5 @@ def init_scale_object(scale_dict):
     """
     cls = load_scale_spec(scale_dict)
     scale_kwargs = {key: value for key, value in scale_dict.items() if key != 'package'}
-    scale_object = cls(**scale_kwargs)  # might raises TypeError by class specification
+    scale_object = cls(**scale_kwargs)  # might raise TypeError by class specification
     return scale_object
