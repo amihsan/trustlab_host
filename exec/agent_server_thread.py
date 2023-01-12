@@ -50,7 +50,7 @@ class ServerThread(Thread):
                     if not METRICS_ON_INIT:
                         self.waiting = self.agent_behavior is None
                         while self.agent_behavior is None or self.get:
-                            None
+                            pass
                     trust_eval_time = None
                     if TIME_MEASURE:
                         trust_eval_start = time.time()
@@ -96,10 +96,10 @@ class ServerThread(Thread):
             self.get = False
 
     def agent_behavior_required(self):
-        # TODO: what to return else?!
         if self.agent_behavior is None and self.waiting and not self.get_handled:
             self.get_handled = True
             return True
+        return False
 
     def __init__(self, conn, ip, port, agent, agent_behavior, scale, logger, observations_done, discovery):
         Thread.__init__(self)
