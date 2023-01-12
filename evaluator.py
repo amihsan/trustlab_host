@@ -16,6 +16,8 @@ SCENARIO_NAMES = {
     'Basic Topic Scenario': 3
 }
 
+RESET_SCENARIO_IN_MONGODB = True
+
 
 class Evaluator:
     def run(self):
@@ -35,7 +37,8 @@ class Evaluator:
                         'type': 'run_scenario',
                         'scenario': {'name': scenario},
                         'is_evaluator': True,
-                        'scenario_name': scenario
+                        'scenario_name': scenario,
+                        'scenario_reset': RESET_SCENARIO_IN_MONGODB
                     }
                     self.send_queue.put(run_message)
                     received_message = self.receive_pipe.recv()
