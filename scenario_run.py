@@ -109,7 +109,6 @@ class ScenarioRun(multiproc.Process):
                 done_message = {
                     "type": "agent_free",
                     "scenario_run_id": self.scenario_run_id,
-                    "scenario_name": self.scenario_name,
                     "agent": observation.sender
                 }
                 self.send_queue.put(done_message)
@@ -119,7 +118,6 @@ class ScenarioRun(multiproc.Process):
                 done_message = {
                     "type": "observation_done",
                     "scenario_run_id": self.scenario_run_id,
-                    "scenario_name": self.scenario_name,
                     "observation_id": observation_done_dict["observation_id"],
                     "receiver": observation_done_dict["receiver"],
                     "trust_log": '<br>'.join(self.logger.read_lines_from_trust_log_str()),
@@ -195,8 +193,7 @@ class CommunicationHelper:
         request = True
         request_message = {
             "type": "get_all_agents",
-            "scenario_run_id": self.scenario_run_id,
-            "scenario_name": self.scenario_name
+            "scenario_run_id": self.scenario_run_id
         }
         self.send_queue.put(request_message)
         while request:
@@ -210,7 +207,6 @@ class CommunicationHelper:
         request_message = {
             "type": "get_metrics_per_agent",
             "scenario_run_id": self.scenario_run_id,
-            "scenario_name": self.scenario_name,
             "agent": agent
         }
         self.send_queue.put(request_message)
@@ -224,7 +220,6 @@ class CommunicationHelper:
         request_message = {
             "type": "get_metrics_per_agent",
             "scenario_run_id": self.scenario_run_id,
-            "scenario_name": self.scenario_name,
             "agent": agent
         }
         self.send_queue.put(request_message)
@@ -233,7 +228,6 @@ class CommunicationHelper:
         request = True
         request_message = {
             "type": "get_scales_per_agent",
-            "scenario_name": self.scenario_name,
             "scenario_run_id": self.scenario_run_id,
             "agent": agent
         }
@@ -248,7 +242,6 @@ class CommunicationHelper:
         request = True
         request_message = {
             "type": "get_history_per_agent",
-            "scenario_name": self.scenario_name,
             "scenario_run_id": self.scenario_run_id,
             "agent": agent
         }
