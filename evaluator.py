@@ -12,8 +12,6 @@ from os.path import exists
 
 SCENARIO_NAMES = {
     'Basic Scenario': 3,
-    'Basic Authority Scenario': 3,
-    'Basic Topic Scenario': 3
 }
 
 RESET_SCENARIO_IN_MONGODB = True

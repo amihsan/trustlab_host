@@ -89,9 +89,7 @@ class ScenarioRun(multiproc.Process):
         if self.ram_tracker:
             self.ram_tracker = RamTracker(os.getpid())
             self.ram_tracker.start()
-        all_agents = []
-        for agent_definition in self.communicationHelper.get_all_agents():
-            all_agents.append(agent_definition['name'])
+        all_agents = self.communicationHelper.get_all_agents()
         self.prepare_scenario()
         self.assert_scenario_start(all_agents)
         observation_dict = None
