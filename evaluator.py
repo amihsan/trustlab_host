@@ -12,9 +12,10 @@ from os.path import exists
 
 SCENARIO_NAMES = {
     'Basic Scenario': 3,
-    'Basic Authority Scenario': 3,
-    'Basic Topic Scenario': 3
 }
+
+RESET_SCENARIO_IN_MONGODB = True
+ONLY_READ_SCENARIO_TO_MONGODB = True
 
 
 class Evaluator:
@@ -35,12 +36,17 @@ class Evaluator:
                         'type': 'run_scenario',
                         'scenario': {'name': scenario},
                         'is_evaluator': True,
-                        'scenario_name': scenario
+                        'scenario_name': scenario,
+                        'scenario_reset': RESET_SCENARIO_IN_MONGODB,
+                        'scenario_only_read': ONLY_READ_SCENARIO_TO_MONGODB
                     }
                     self.send_queue.put(run_message)
                     received_message = self.receive_pipe.recv()
                     if received_message['type'] == 'scenario_run_id':
                         print(f"Got run id for '{scenario}' run {i+1}: {received_message['scenario_run_id']}")
+                    elif received_message['type'] == 'read_only_done':
+                        print(f"Read-only scenario '{scenario}' run {i+1} done.")
+                        continue  # skip receiving of scenario results due to read only
                     else:
                         raise RuntimeError(f"Did not receive scenario run ID after starting scenario '{scenario}' "
                                            f"run {i+1}")

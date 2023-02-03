@@ -13,7 +13,14 @@ class RamTracker(Thread):
         self.track = True
 
     def get_ram_usage(self):
-        return self.process.memory_info().rss
+        measured, mem = False, 0
+        while not measured:
+            try:
+                mem = self.process.memory_info().rss
+                measured = True
+            except OSError:
+                pass
+        return mem
 
     def get_ram_usage_mb(self):
         return self.get_ram_usage() / 1024 / 1024
