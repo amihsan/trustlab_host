@@ -102,24 +102,25 @@ for a decentralized web has to be done manually with a high effort.
 
 1. Ensure execution of [aTLAS][trustlab-repo].
 
-2. Start supervisor, e.g. with a maximum capacity of 10 agents:
+2. Start supervisor(s), e.g. with a maximum capacity of 10 agents:
     ```bash
-    python supervisors.py 10
+    python supervisor.py 10
     ```
-   For more specific preferences conduct the help of `supervisors.py`:
+   For more specific preferences conduct the help of [supervisor.py](supervisor.py):
    ```bash
-    python supervisors.py -h
+    python supervisor.py -h
     ```
 
 <details>
 <summary>Evaluator Script</summary>
 
-1. Ensure execution of [aTLAS][trustlab-repo] and some running supervisors.
-2. Start evaluator
+1. Ensure execution of [aTLAS][trustlab-repo] and of one or more supervisors.
+2. Update the [evaluator.py](evaluator.py) with the desired scenarios to execute.
+3. Start evaluator
     ```bash
     python evaluator.py
     ```
-   For more specific preferences conduct the help of `evaluator.py`:
+   For more specific preferences conduct the help of [evaluator.py](evaluator.py):
    ```bash
     python evaluator.py -h
     ```
@@ -141,6 +142,7 @@ The original setup of this repository is by the first author [Valentin Siegert][
 
 All authors of this work in alphabetic order:
 
+- [Shovra Das](https://github.com/shovradas)
 - [Martin Gaedke](https://vsr.informatik.tu-chemnitz.de/people/gaedke)
 - Arved Kirchhoff
 - [Mahda Noura](https://vsr.informatik.tu-chemnitz.de/people/mahdanoura)
@@ -152,6 +154,7 @@ The authors acknowledge the work of the following students:
 
 - Jun Li
 - Marten Rogall
+- Bastian Rose
 
 
 <!-- Identifiers, in alphabetical order -->
