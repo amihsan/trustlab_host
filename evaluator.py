@@ -9,6 +9,9 @@ from datetime import datetime
 from distutils.util import strtobool
 from os.path import exists
 
+"""
+Configuration of th Evaluator.
+"""
 
 SCENARIO_NAMES = {
     'Basic Scenario': 3,
@@ -16,6 +19,10 @@ SCENARIO_NAMES = {
 
 RESET_SCENARIO_IN_MONGODB = True
 ONLY_READ_SCENARIO_TO_MONGODB = True
+
+"""
+End of configuration.
+"""
 
 
 class Evaluator:
