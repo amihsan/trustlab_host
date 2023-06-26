@@ -11,6 +11,7 @@ python-serializer = "==1.0.2"
 aioprocessing = "==2.0.1"
 pympler = "==1.0.1"
 psutil = "==5.9.4"
+scipy = "*"
 
 [requires]
 python_version = "3.7"
