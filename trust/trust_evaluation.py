@@ -13,6 +13,8 @@ from models import Scale, Observation
 from datetime import datetime
 from loggers.basic_logger import BasicLogger
 from trust.artifacts.travos.experience import experience
+from trust.artifacts.travos.opinion import look_for_opinions
+
 
 
 def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, discovery):
@@ -38,7 +40,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     """
     trust_values = {}
     resource_id = observation.details['uri']
-    confidence_threshold = 0.95  # for travos
+
 
     if any('content_trust' in s for s in observation.details):
         resource_data = content_trust_extract_resource_data(observation)
@@ -154,10 +156,14 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         logger.write_to_agent_trust_log(agent, 'content_trust.popularity', other_agent, popularity_value, resource_id)
         trust_values['content_trust.popularity'] = popularity_value
 
-    if 'travos.experience' in agent_behavior:
-        experience_value = experience(agent, other_agent, resource_id, scale, logger)
+    if 'travos.experience' or 'travos.opinion' in agent_behavior:
+        experience_value = experience(agent, other_agent, resource_id, scale, logger, discovery, recency_limit)
         logger.write_to_agent_trust_log(agent, 'travos.experience', other_agent, experience_value, resource_id)
         trust_values['travos.experience'] = experience_value
+        opinion_value = look_for_opinions(agent, other_agent, resource_id, scale, logger, discovery, recency_limit)
+        logger.write_to_agent_trust_log(agent, 'travos.opinion', other_agent, opinion_value, resource_id)
+        trust_values['travos.opinion'] = opinion_value
+
 
     """
     final Trust calculations
@@ -170,7 +176,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
             final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'], None)
 
         if agent_behavior['__final__']['name'] == 'travos':
-            final_trust_value = experience_value
+            final_trust_value = opinion_value if opinion_value > experience_value else experience_value
 
     # for topic in resource_data['topics']:
     #     logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
