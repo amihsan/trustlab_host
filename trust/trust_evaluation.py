@@ -229,7 +229,7 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     return final_trust_value
 
 
-# --------- For travos confidence value ------#
+# For travos confidence value calculation
 def beta_integral(lower_limit, upper_limit, alpha, beta_):
     dist = beta(alpha, beta_)
     pdf = lambda x: dist.pdf(x)

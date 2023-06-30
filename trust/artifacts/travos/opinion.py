@@ -50,15 +50,15 @@ def look_for_opinions(agent, other_agent, resource_id, scale, logger, discovery,
         opinion_outcome = create_opinion_outcome(trust_value)
         opinion_history.append(opinion_outcome)
 
-    # ------ Calculate x(successful) and y(unsuccessful) (from opinion_history)-------#
+    # Calculate x(successful) and y(unsuccessful) (from opinion_history)
     x = sum(value[0] for opinion in opinion_history for value in [opinion])
     y = sum(value[1] for opinion in opinion_history for value in [opinion])
 
-    # ------- Calculate shape parameter alpha and beta-----#
+    # Calculate shape parameter alpha and beta
     alpha = x + 1
     beta = y + 1
 
-    # ------- Calculate new opinion trust  value for other_agent-------#
+    # Calculate new opinion trust  value for other_agent
     opinion_trust_value = alpha / (alpha + beta)
 
     print(f"opinion provider : {opinion_provider_agent}")
@@ -70,8 +70,8 @@ def look_for_opinions(agent, other_agent, resource_id, scale, logger, discovery,
     return opinion_trust_value
 
 
-# -------- Create opinion tuple from trust values provided by opinion provider agent----------#
-# ---------by setting mean = trust value----------------------#
+# Create opinion tuple from trust values provided by opinion provider agent
+# by setting mean = trust value
 def create_opinion_outcome(mean):
     std_dev = 0.10
     lower_bound = 0.0
@@ -88,3 +88,4 @@ def create_opinion_outcome(mean):
 
     opinion = (success, unsuccess)
     return opinion
+
