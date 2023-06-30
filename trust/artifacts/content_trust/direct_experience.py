@@ -22,16 +22,16 @@ def direct_experience(agent, resource_id, recency_limit, scale, logger):
     """
 
     history_lines = logger.read_lines_from_agent_history(agent)
-    print(history_lines)
+
     # getting all history values of the agent respective to the evaluated resource and filters them based on their age
     # and the recency limit set in the trust preferences of the agent
     history = [float(entry['trust_value']) for entry in history_lines if entry['resource_id'] == resource_id and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit and
                entry['trust_value'] != 'None']
-    print(history)
+
 
     direct_xp = sum(history) / len(history) if len(history) > 0 else None
-    print(direct_xp)
+
     return direct_xp
 
 
