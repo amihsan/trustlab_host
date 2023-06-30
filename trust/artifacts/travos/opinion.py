@@ -81,7 +81,7 @@ def create_opinion_outcome(mean):
 
     dist = truncnorm((lower_bound - mean) / std_dev, (upper_bound - mean) / std_dev, loc=mean, scale=std_dev)
 
-    samples = dist.rvs(size=10)
+    samples = dist.rvs(size=sample_size)
 
     success = sum(value > cooperation_threshold for value in samples)
     unsuccess = sample_size - success
