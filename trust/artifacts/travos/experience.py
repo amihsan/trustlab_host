@@ -31,15 +31,15 @@ def experience(agent, other_agent, resource_id, scale, logger, discovery, recenc
             history_value = float(item['trust_value'])
             print(f"history value:{history_value}")
 
-            # Convert history value to a tuple of successful and unsuccessful past interactions by using
-            # truncated normal distribution
+            # --- Convert history value to a tuple of successful and unsuccessful past interactions by using----#
+            # ----truncated normal distribution-----#
             std_dev = 0.10
             lower_bound = 0.0
             upper_bound = 1.0
             cooperation_threshold = 0.5
             sample_size = 10
 
-            # setting mean = history_value in dist formula
+            # ------------- setting mean = history_value in dist formula---------#
             # dist = truncnorm((lower_bound - mean) / std_dev, (upper_bound - mean) / std_dev, loc=mean, scale=std_dev)
 
             dist = truncnorm((lower_bound - history_value) / std_dev, (upper_bound - history_value) / std_dev,
@@ -50,17 +50,17 @@ def experience(agent, other_agent, resource_id, scale, logger, discovery, recenc
             success = sum(value > cooperation_threshold for value in samples)
             unsuccess = sample_size - success
 
+            # ---- History Tuple-------#
             history = (success, unsuccess)
 
-            # history_outcome = create_history_tuple(history_value)
-            print(f"history tuple:{history}")
+            print(f"History tuple:{history}")
 
-            # Calculate direct expected trust value using beta pdf
-            # shape parameter
+            # -----Calculate direct expected trust value using beta pdf-----#
+            # -----shape parameter-----#
             x = history[0] + 1
             y = history[1] + 1
 
-            # calculate expected trust value
+            # ------- calculate expected trust value ------#
             direct_trust = x / (x + y)
             print(f"experience value:{direct_trust}")
             return direct_trust, history
