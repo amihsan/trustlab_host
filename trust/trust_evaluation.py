@@ -163,7 +163,6 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
 
     if 'travos.experience' or 'travos.opinion' in agent_behavior:
         experience_value = experience(agent, other_agent, resource_id, scale, logger, discovery, recency_limit)
-        print(experience_value[0], experience_value[1])
         logger.write_to_agent_trust_log(agent, 'travos.experience', other_agent, experience_value[0], resource_id)
 
         confidence_value = beta_integral(experience_value[0] - error_threshold, experience_value[0] + error_threshold,
@@ -180,12 +179,32 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
                 f" '{confidence_threshold}'")
             print(f"Experience value is Final trust score: {experience_value[0]}")
             trust_values['travos.experience'] = experience_value[0]
+            if experience_value[0] > scale.cooperation_threshold():
+                print('Trustworthy')
+                interaction_outcome = (experience_value[1][0] + 1, experience_value[1][1])
+                print(f"Past outcome: {experience_value[1]}")
+                print(f"New outcome: {interaction_outcome}")
+            else:
+                print('Not Trustworthy')
+                interaction_outcome = (experience_value[1][0], experience_value[1][1] + 1)
+                print(f"Past outcome: {experience_value[1]}")
+                print(f"New outcome: {interaction_outcome}")
 
         if confidence_value < confidence_threshold:
             print(
                 f"Opinion needed as confidence value '{confidence_value}' < confidence threshold '{confidence_threshold}'")
             print(f"Opinion value is Final trust score: {opinion_value}")
             trust_values['travos.opinion'] = opinion_value
+            if opinion_value > scale.cooperation_threshold():
+                print('Trustworthy')
+                interaction_outcome = (experience_value[1][0] + 1, experience_value[1][1])
+                print(f"Past outcome: {experience_value[1]}")
+                print(f"New outcome: {interaction_outcome}")
+            else:
+                print('Not Trustworthy')
+                interaction_outcome = (experience_value[1][0], experience_value[1][1] + 1)
+                print(f"Past outcome: {experience_value[1]}")
+                print(f"New outcome: {interaction_outcome}")
 
     """
     final Trust calculations
