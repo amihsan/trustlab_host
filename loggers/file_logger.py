@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 import os
 import re
@@ -88,7 +89,8 @@ class FileLogger(BasicLogger):
                 try:
                     with open(log_path.absolute(), "r") as log_file:
                         # strip deletes new line feeds, and filter deletes empty lines from list
-                        log_lines = list(filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
+                        log_lines = list(
+                            filter(None, [line.strip() if strip else line for line in log_file.readlines()]))
                     if len_filter and type(len_filter) is int:
                         log_lines = self.apply_len_filter(log_lines, len_filter)
                     executed = True
@@ -155,8 +157,9 @@ class FileLogger(BasicLogger):
 
     def write_to_agent_history(self, agent, other_agent, history_value, resource_id=None):
         log_path = self.log_path / f"{agent}_history.log"
+        value_string = f"'{history_value}'" if isinstance(history_value, tuple) else history_value
         write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
-                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {history_value}"
+                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {value_string}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
                 print(write_string, file=history_file)
@@ -223,7 +226,7 @@ class FileLogger(BasicLogger):
                        f"{f' in resource <{resource_id}>' if resource_id else ''}: {trust_value}"
         with self.semaphore:
             with open(log_path.absolute(), "a+") as trust_log:
-                print(write_string,  file=trust_log)
+                print(write_string, file=trust_log)
 
     def __init__(self, scenario_run_id, semaphore):
         super().__init__(scenario_run_id, semaphore)

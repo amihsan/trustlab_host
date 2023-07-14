@@ -12,10 +12,7 @@ from trust.artifacts.final_trust import weighted_avg_final_trust
 from models import Scale, Observation
 from datetime import datetime
 from loggers.basic_logger import BasicLogger
-from trust.artifacts.travos.experience import experience
-from trust.artifacts.travos.opinion import look_for_opinions
-from scipy.stats import beta
-from scipy.integrate import quad
+from trust.artifacts.travos.final_outcome import final_interaction_outcome
 
 
 def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, discovery):
@@ -41,11 +38,6 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
     """
     trust_values = {}
     resource_id = observation.details['uri']
-
-    # ----- For travos -----#
-    error_threshold = 0.2
-    confidence_threshold = 0.95
-    # -----------------------#
 
     if any('content_trust' in s for s in observation.details):
         resource_data = content_trust_extract_resource_data(observation)
@@ -161,51 +153,6 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         logger.write_to_agent_trust_log(agent, 'content_trust.popularity', other_agent, popularity_value, resource_id)
         trust_values['content_trust.popularity'] = popularity_value
 
-    if 'travos.experience' or 'travos.opinion' in agent_behavior:
-        experience_value = experience(agent, other_agent, resource_id, scale, logger, discovery, recency_limit)
-        logger.write_to_agent_trust_log(agent, 'travos.experience', other_agent, experience_value[0], resource_id)
-
-        confidence_value = beta_integral(experience_value[0] - error_threshold, experience_value[0] + error_threshold,
-                                         experience_value[1][0] + 1, experience_value[1][1] + 1) / \
-                           beta_integral(0, 1, experience_value[1][0] + 1, experience_value[1][1] + 1)
-        print(f"confidence : {confidence_value}")
-
-        opinion_value = look_for_opinions(agent, other_agent, resource_id, scale, logger, discovery, recency_limit)
-        logger.write_to_agent_trust_log(agent, 'travos.opinion', other_agent, opinion_value, resource_id)
-
-        if confidence_value >= confidence_threshold:
-            print(
-                f"Opinion not needed as confidence value '{confidence_value}' >= confidence threshold "
-                f" '{confidence_threshold}'")
-            print(f"Experience value is Final trust score: {experience_value[0]}")
-            trust_values['travos.experience'] = experience_value[0]
-            if experience_value[0] > scale.cooperation_threshold():
-                print('Trustworthy')
-                interaction_outcome = (experience_value[1][0] + 1, experience_value[1][1])
-                print(f"Past outcome: {experience_value[1]}")
-                print(f"New outcome: {interaction_outcome}")
-            else:
-                print('Not Trustworthy')
-                interaction_outcome = (experience_value[1][0], experience_value[1][1] + 1)
-                print(f"Past outcome: {experience_value[1]}")
-                print(f"New outcome: {interaction_outcome}")
-
-        if confidence_value < confidence_threshold:
-            print(
-                f"Opinion needed as confidence value '{confidence_value}' < confidence threshold '{confidence_threshold}'")
-            print(f"Opinion value is Final trust score: {opinion_value}")
-            trust_values['travos.opinion'] = opinion_value
-            if opinion_value > scale.cooperation_threshold():
-                print('Trustworthy')
-                interaction_outcome = (experience_value[1][0] + 1, experience_value[1][1])
-                print(f"Past outcome: {experience_value[1]}")
-                print(f"New outcome: {interaction_outcome}")
-            else:
-                print('Not Trustworthy')
-                interaction_outcome = (experience_value[1][0], experience_value[1][1] + 1)
-                print(f"Past outcome: {experience_value[1]}")
-                print(f"New outcome: {interaction_outcome}")
-
     """
     final Trust calculations
     """
@@ -216,8 +163,9 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
         if agent_behavior['__final__']['name'] == 'weighted_average':
             final_trust_value = weighted_avg_final_trust(trust_values, agent_behavior['__final__']['weights'], None)
 
+        # For travos
         if agent_behavior['__final__']['name'] == 'travos':
-            final_trust_value = opinion_value if confidence_value < confidence_threshold else experience_value[0]
+            final_trust_value = final_interaction_outcome(agent, other_agent, resource_id, logger, discovery)
 
     # for topic in resource_data['topics']:
     #     logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
@@ -227,11 +175,3 @@ def eval_trust(agent, other_agent, observation, agent_behavior, scale, logger, d
             logger.write_to_agent_topic_trust(agent, other_agent, topic, final_trust_value, resource_id)
 
     return final_trust_value
-
-
-# For travos confidence value calculation
-def beta_integral(lower_limit, upper_limit, alpha, beta_):
-    dist = beta(alpha, beta_)
-    pdf = lambda x: dist.pdf(x)
-    integral, _ = quad(pdf, lower_limit, upper_limit)
-    return integral
