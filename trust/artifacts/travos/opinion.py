@@ -25,7 +25,7 @@ def look_for_opinions(agent, other_agent, logger, discovery):
     # store the opinion tuple collected from opinion provider agent list
     opinion_outcome = []
 
-    # collect  opinion tuple provided by available opinion provider agent
+    # collect  opinion tuple from opinion provider agent
     for agent in opinion_provider_agent:
         # print(f"provider agent:{agent}")
         agent_history = logger.read_lines_from_agent_history(agent)
@@ -38,6 +38,7 @@ def look_for_opinions(agent, other_agent, logger, discovery):
                 history = ast.literal_eval(history_string)
 
                 opinion_outcome.append(history)
+                break
 
     # Calculate M(successful) and N(unsuccessful) (from opinion_outcome)
     M = sum(value[0] for opinion in opinion_outcome for value in [opinion])

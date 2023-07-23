@@ -14,11 +14,11 @@ Configuration of th Evaluator.
 """
 
 SCENARIO_NAMES = {
-    'Basic Scenario': 3,
+    'Acc2': 10,
 }
 
 RESET_SCENARIO_IN_MONGODB = True
-ONLY_READ_SCENARIO_TO_MONGODB = True
+# ONLY_READ_SCENARIO_TO_MONGODB = True
 
 """
 End of configuration.
@@ -38,29 +38,29 @@ class Evaluator:
             scenario_run_ids = []
             for scenario, raps in SCENARIO_NAMES.items():
                 for i in range(0, raps):
-                    print(f"Starting scenario '{scenario}' run {i+1}...")
+                    print(f"Starting scenario '{scenario}' run {i + 1}...")
                     run_message = {
                         'type': 'run_scenario',
                         'scenario': {'name': scenario},
                         'is_evaluator': True,
                         'scenario_name': scenario,
                         'scenario_reset': RESET_SCENARIO_IN_MONGODB,
-                        'scenario_only_read': ONLY_READ_SCENARIO_TO_MONGODB
+                        # 'scenario_only_read': ONLY_READ_SCENARIO_TO_MONGODB
                     }
                     self.send_queue.put(run_message)
                     received_message = self.receive_pipe.recv()
                     if received_message['type'] == 'scenario_run_id':
-                        print(f"Got run id for '{scenario}' run {i+1}: {received_message['scenario_run_id']}")
+                        print(f"Got run id for '{scenario}' run {i + 1}: {received_message['scenario_run_id']}")
                     elif received_message['type'] == 'read_only_done':
-                        print(f"Read-only scenario '{scenario}' run {i+1} done.")
+                        print(f"Read-only scenario '{scenario}' run {i + 1} done.")
                         continue  # skip receiving of scenario results due to read only
                     else:
                         raise RuntimeError(f"Did not receive scenario run ID after starting scenario '{scenario}' "
-                                           f"run {i+1}")
+                                           f"run {i + 1}")
                     received_message = self.receive_pipe.recv()
                     if received_message['type'] == 'scenario_results':
                         receiving_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                        print(f"Scenario '{scenario}' run {i+1} finished as '{received_message['scenario_run_id']}' "
+                        print(f"Scenario '{scenario}' run {i + 1} finished as '{received_message['scenario_run_id']}' "
                               f"at {receiving_time} executed under {received_message['supervisor_amount']} "
                               f"supervisors.\n\n")
                         if self.print_to_file:
@@ -74,7 +74,7 @@ class Evaluator:
                                 data[received_message['scenario_run_id']] = {
                                     'datetime': receiving_time,
                                     'scenario': scenario,
-                                    'run': i+1,
+                                    'run': i + 1,
                                     'supervisor_amount': received_message['supervisor_amount']}
                                 print(json.dumps(data, indent=4), file=json_file)
         exit_message = {

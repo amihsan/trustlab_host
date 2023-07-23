@@ -22,6 +22,7 @@ def experience(agent, other_agent, logger):
 
             # history tuple as a string
             history_string = ast.literal_eval(item['trust_value'])
+            # print(history)
 
             # convert string to tuple
             history = ast.literal_eval(history_string)
@@ -30,8 +31,9 @@ def experience(agent, other_agent, logger):
             # find out direct experience trust value
             direct_trust = calculate_direct_trust(history)
             # print(f"Experience value: {direct_trust}")
+            break
 
-            return direct_trust, history
+    return direct_trust, history
 
 
 # Calculate direct expected experience trust value Beta PDF
@@ -40,6 +42,7 @@ def calculate_direct_trust(history):
     # determine no of successful (m) and no of unsuccessful (n) interactions from history tuple
     m = history[0]
     n = history[1]
+
 
     # shape parameter for pdf
     alpha = m + 1

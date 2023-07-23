@@ -4,27 +4,24 @@ from scipy.stats import beta
 from scipy.integrate import quad
 
 
-def calculate_confidence_value(agent, other_agent, logger):
+def calculate_confidence_value(experience_value):
     """
       Get confidence value  to determine the accuracy of direct experience trust value
 
-      :param agent: The agent which calculates the confidence value.
-      :type agent: str
-      :param other_agent: The other agent for which the confidence value is calculated.
-      :type other_agent: str
-      :param logger: The logger object to be used by the agent.
-      :type logger: BasicLogger
-      :return: The Confidence value.
+      :param experience_value: Both Direct trust value and history tuple between agent and other agent.
+      :type experience_value: tuple (trust value, (m, n))
+      :return: Confidence value.
       :rtype: float or int
       """
 
     # Predefined value for travos. may change (such as 0.1)
     error_threshold = 0.2
 
-    experience_value = experience(agent, other_agent, logger)
+    # Find out trust value and history tuple
     direct_trust = experience_value[0]
     direct_trust_tuple = experience_value[1]
 
+    # Confidence value
     confidence_value = beta_integral(direct_trust - error_threshold, direct_trust + error_threshold,
                                      direct_trust_tuple[0] + 1, direct_trust_tuple[1] + 1) / \
                        beta_integral(0, 1, direct_trust_tuple[0] + 1, direct_trust_tuple[1] + 1)

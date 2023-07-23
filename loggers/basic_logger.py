@@ -8,6 +8,7 @@ class BasicLogger(ABC):
     Provides the abstract class for any logger class to interface the logs and provide functionalities to
     read and write the logs' data lines.
     """
+
     @staticmethod
     @abstractmethod
     def apply_len_filter(lines, len_filter):
