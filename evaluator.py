@@ -14,7 +14,7 @@ Configuration of th Evaluator.
 """
 
 SCENARIO_NAMES = {
-    'Acc2': 10,
+    'Acc1 with 5 interactions': 5,
 }
 
 RESET_SCENARIO_IN_MONGODB = True

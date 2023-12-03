@@ -2,7 +2,6 @@ import ast
 from loggers.basic_logger import BasicLogger
 from models import Scale
 
-
 def look_for_opinions(agent, other_agent, logger, discovery):
     """
     Calculate opinion trust value on other agent by collecting opinions from third parties (other available agents).
@@ -56,8 +55,7 @@ def look_for_opinions(agent, other_agent, logger, discovery):
     print(f"Shape parameter for opinion: ({alpha}, {beta})")
     print(f"The opinion trust value for {other_agent} is: {opinion_trust_value}")
 
-    # To do
-    # Filter inaccurate opinion
+
 
     return opinion_trust_value
 

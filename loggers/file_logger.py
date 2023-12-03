@@ -159,7 +159,8 @@ class FileLogger(BasicLogger):
         log_path = self.log_path / f"{agent}_history.log"
         value_string = f"'{history_value}'" if isinstance(history_value, tuple) else history_value
         write_string = f"{BasicLogger.get_current_time()}, history trust on '{other_agent}'" \
-                       f"{f' in resource <{resource_id}>' if resource_id else ''}: {value_string}"
+                       f"{f' in resource <{resource_id}>' if resource_id else ''}: '{value_string}'"
+        # f"{f' in resource <{resource_id}>' if resource_id else ''}: {value_string}" (original )
         with self.semaphore:
             with open(log_path.absolute(), "a+") as history_file:
                 print(write_string, file=history_file)

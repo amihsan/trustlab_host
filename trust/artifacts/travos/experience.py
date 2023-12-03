@@ -1,6 +1,4 @@
 import ast
-
-
 def experience(agent, other_agent, logger):
     """
         Calculate the direct experience trust value from the agent's history about other agents.
