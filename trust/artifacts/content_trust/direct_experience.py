@@ -25,7 +25,7 @@ def direct_experience(agent, resource_id, recency_limit, scale, logger):
 
     # getting all history values of the agent respective to the evaluated resource and filters them based on their age
     # and the recency limit set in the trust preferences of the agent
-    history = [float(entry['trust_value']) for entry in history_lines if entry['resource_id'] == resource_id and
+    history = [float(entry['trust_value'].replace("'", "")) for entry in history_lines if entry['resource_id'] == resource_id and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit and
                entry['trust_value'] != 'None']
 
@@ -53,7 +53,7 @@ def get_combined_direct_experience_for_agent(agent, third_agent, logger, recency
     """
 
     history_lines = logger.read_lines_from_agent_history(agent)
-    history = [float(entry['trust_value']) for entry in history_lines if entry['other_agent'] == third_agent and
+    history = [float(entry['trust_value'].replace("'", "")) for entry in history_lines if entry['other_agent'] == third_agent and
                datetime.strptime(entry['date_time'], BasicLogger.get_time_format_string()) > recency_limit and
                entry['trust_value'] != 'None']
     # calculate direct experience

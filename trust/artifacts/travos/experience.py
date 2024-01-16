@@ -1,4 +1,6 @@
 import ast
+
+
 def experience(agent, other_agent, logger):
     """
         Calculate the direct experience trust value from the agent's history about other agents.
@@ -17,7 +19,6 @@ def experience(agent, other_agent, logger):
     # based on other agent.
     for item in history_lines:
         if item['other_agent'] == other_agent:
-
             # history tuple as a string
             history_string = ast.literal_eval(item['trust_value'])
             # print(history)
@@ -36,11 +37,9 @@ def experience(agent, other_agent, logger):
 
 # Calculate direct expected experience trust value Beta PDF
 def calculate_direct_trust(history):
-
     # determine no of successful (m) and no of unsuccessful (n) interactions from history tuple
     m = history[0]
     n = history[1]
-
 
     # shape parameter for pdf
     alpha = m + 1

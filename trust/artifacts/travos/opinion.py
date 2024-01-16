@@ -1,6 +1,6 @@
 import ast
 from loggers.basic_logger import BasicLogger
-from models import Scale
+
 
 def look_for_opinions(agent, other_agent, logger, discovery):
     """
@@ -55,7 +55,4 @@ def look_for_opinions(agent, other_agent, logger, discovery):
     print(f"Shape parameter for opinion: ({alpha}, {beta})")
     print(f"The opinion trust value for {other_agent} is: {opinion_trust_value}")
 
-
-
     return opinion_trust_value
-
